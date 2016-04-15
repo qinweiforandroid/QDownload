@@ -6,5 +6,6 @@ package com.qw.download;
  * email:qinwei_it@163.com
  */
 public class DownloadConfig {
-
+    public static final int MAX_DOWNLOAD_TASK_SIZE = 2;
+    public static final int MAX_DOWNLOAD_THREAD_SIZE = 2;
 }

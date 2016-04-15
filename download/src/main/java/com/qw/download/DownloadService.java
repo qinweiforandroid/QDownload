@@ -32,11 +32,38 @@ public class DownloadService extends Service {
     public Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            super.handleMessage(msg);
             DownloadEntity e = (DownloadEntity) msg.obj;
             DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(e);
+            switch (msg.what) {
+                case NOTIFY_DOWNLOAD_ERROR:
+                case NOTIFY_DOWNLOAD_COMPLETED:
+                case NOTIFY_DOWNLOAD_PAUSED:
+                case NOTIFY_DOWNLOAD_CANCELLED:
+                    executeNext(e);
+                    break;
+                case NOTIFY_DOWNLOAD_CONNECTING:
+                case NOTIFY_DOWNLOAD_ING:
+                case NOTIFY_DOWNLOAD_PROGRESS_UPDATE:
+                    break;
+                default:
+                    break;
+            }
         }
     };
+
+    public void executeNext(DownloadEntity e) {
+        DownloadTask task = mDownloadingTasks.remove(e.id);
+        DLog.d(TAG, "executeNext mDownloadingTasks.remove " + (task != null));
+        if (task != null) {
+            DownloadEntity entity = mDownloadWaitQueues.poll();
+            if (entity != null) {
+                DLog.d(TAG, entity.id + " executeNext mDownloadWaitQueues.poll() " + (task != null));
+                add(entity);
+            } else {
+                DLog.d(TAG, "executeNext no task can run ");
+            }
+        }
+    }
 
     @Nullable
     @Override
@@ -123,7 +150,7 @@ public class DownloadService extends Service {
         } else {
             entity.state = DownloadEntity.State.paused;
             mDownloadWaitQueues.remove(entity);
-            DLog.d(TAG, entity.id + " stop mDownloadWaitQueues remove |size:"+mDownloadWaitQueues.size());
+            DLog.d(TAG, entity.id + " stop mDownloadWaitQueues remove |size:" + mDownloadWaitQueues.size());
             DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
         }
     }
@@ -136,7 +163,7 @@ public class DownloadService extends Service {
         } else {
             entity.state = DownloadEntity.State.cancelled;
             mDownloadWaitQueues.remove(entity);
-            DLog.d(TAG, entity.id + " cancel mDownloadWaitQueues remove |size:"+mDownloadWaitQueues.size());
+            DLog.d(TAG, entity.id + " cancel mDownloadWaitQueues remove |size:" + mDownloadWaitQueues.size());
             DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
         }
     }

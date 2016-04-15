@@ -1,5 +1,6 @@
 package com.qw.example;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -82,5 +83,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onPause() {
         super.onPause();
         DownloadManager.getInstance(this).removeObserver(watcher);
+    }
+
+    public void goList(View v){
+        Intent intent=new Intent(this,ListActivity.class);
+        startActivity(intent);
     }
 }

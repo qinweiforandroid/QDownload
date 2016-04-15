@@ -80,4 +80,8 @@ public class DownloadManager {
     public void removeObserver(DownloadWatcher watcher) {
         DownloadChanger.getInstance(context).deleteObserver(watcher);
     }
+
+    public DownloadEntity findById(String id) {
+        return DownloadChanger.getInstance(context).findById(id);
+    }
 }

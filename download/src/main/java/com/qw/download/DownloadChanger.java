@@ -35,6 +35,10 @@ public class DownloadChanger extends Observable {
     }
 
     public void addOperationTasks(DownloadEntity entity) {
-        mOperationTasks.put(entity.id,entity);
+        mOperationTasks.put(entity.id, entity);
+    }
+
+    public DownloadEntity findById(String id) {
+        return mOperationTasks.get(id);
     }
 }

@@ -36,4 +36,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="取消下载" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_marginTop="@dimen/activity_horizontal_margin"
+        android:layout_height="wrap_content"
+        android:onClick="goList"
+        android:text="多任务断点下载"/>
 </LinearLayout>

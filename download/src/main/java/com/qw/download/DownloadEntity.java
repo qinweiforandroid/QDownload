@@ -16,17 +16,25 @@ public class DownloadEntity implements Serializable {
     public State state;
     public HashMap<Integer, Long> ranges;
 
+    public DownloadEntity(){}
+    public DownloadEntity(String id, String url) {
+        this.id = id;
+        this.url = url;
+        state = State.idle;
+    }
+
     public void reset() {
         currentLength = 0;
         ranges = null;
     }
 
     public enum State {
-        idle, connect, ing, resume, paused, cancelled, error, done,  wait
+        idle, connect, ing, resume, paused, cancelled, error, done, wait
     }
 
     @Override
     public String toString() {
         return id + " is " + state.name() + " " + currentLength + "/" + contentLength;
     }
+
 }

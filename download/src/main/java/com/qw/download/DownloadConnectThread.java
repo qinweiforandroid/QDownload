@@ -8,11 +8,14 @@ package com.qw.download;
 public class DownloadConnectThread implements Runnable {
     private OnConnectThreadListener listener;
     private DownloadEntity entity;
+    private boolean running;
+    private DownloadEntity.State state;
+
 
     public interface OnConnectThreadListener {
         void onConnectCompleted(long contentLength, boolean isSupportRange);
 
-        void onConnectError(String msg);
+        void onConnectError(DownloadEntity.State state, String msg);
     }
 
     public DownloadConnectThread(DownloadEntity entity) {
@@ -22,15 +25,30 @@ public class DownloadConnectThread implements Runnable {
     @Override
     public void run() {
 //        do request server
+        running = true;
         try {
+            state = DownloadEntity.State.connect;
             Thread.sleep(5000);
             listener.onConnectCompleted(50001, true);
         } catch (InterruptedException e) {
             e.printStackTrace();
+            listener.onConnectError(state, e.getMessage());
+        } finally {
+            running = false;
         }
     }
 
     public void setOnConnectThreadListener(OnConnectThreadListener listener) {
         this.listener = listener;
+    }
+
+    public boolean isRunning() {
+        return running;
+    }
+
+    public void cancel(DownloadEntity.State state) {
+        running = false;
+        this.state = state;
+//        Thread.currentThread().interrupt();
     }
 }

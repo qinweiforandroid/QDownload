@@ -16,8 +16,13 @@ public class DownloadEntity implements Serializable {
     public State state;
     public HashMap<Integer, Long> ranges;
 
+    public void reset() {
+        currentLength = 0;
+        ranges = null;
+    }
+
     public enum State {
-        idle, connect, ing, resume, paused, cancelled, error, done, wait
+        idle, connect, ing, resume, paused, cancelled, error, done,  wait
     }
 
     @Override

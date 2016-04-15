@@ -6,7 +6,7 @@ package com.qw.download;
  * email:qinwei_it@163.com
  */
 public class DownloadThread implements Runnable {
-    public static final String TAG="DownloadThread";
+    public static final String TAG = "DownloadThread";
     private DownloadEntity entity;
     private int threadIndex;
     private int start;
@@ -14,12 +14,13 @@ public class DownloadThread implements Runnable {
     private OnDownloadListener listener;
     private boolean isRunning;
     private DownloadEntity.State state;
+
     public DownloadThread(DownloadEntity entity, int threadIndex, int start, int end) {
         this.entity = entity;
         this.threadIndex = threadIndex;
         this.start = start;
         this.end = end;
-        DLog.d(TAG,"threadIndex "+threadIndex+" start-end:"+start+"_"+end);
+        DLog.d(TAG, "threadIndex " + threadIndex + " start-end:" + start + "_" + end);
     }
 
     public boolean isRunning() {
@@ -27,10 +28,15 @@ public class DownloadThread implements Runnable {
     }
 
     public void pause() {
-        state= DownloadEntity.State.paused;
-        isRunning=false;
-        DLog.d(TAG,"pause interrupt threadIndex "+threadIndex);
-        Thread.currentThread().interrupt();
+        state = DownloadEntity.State.paused;
+        isRunning = false;
+        DLog.d(TAG, "pause interrupt threadIndex " + threadIndex);
+    }
+
+    public void cancel() {
+        state = DownloadEntity.State.cancelled;
+        isRunning = false;
+        DLog.d(TAG, "cancel interrupt threadIndex " + threadIndex);
     }
 
     public interface OnDownloadListener {
@@ -51,9 +57,9 @@ public class DownloadThread implements Runnable {
 
     @Override
     public void run() {
+        isRunning = true;
         try {
-            state= DownloadEntity.State.ing;
-            isRunning=true;
+            state = DownloadEntity.State.ing;
             int buffer = 1000;
             while (isRunning) {
                 Thread.sleep(500);
@@ -61,21 +67,25 @@ public class DownloadThread implements Runnable {
                 if (start < end) {
                     listener.onDownloadProgressUpdate(threadIndex, buffer);
                 } else {
-                    listener.onDownloadProgressUpdate(threadIndex, end - (start-buffer));
+                    listener.onDownloadProgressUpdate(threadIndex, end - (start - buffer));
                     break;
                 }
             }
-            if(state== DownloadEntity.State.paused){
+            if (state == DownloadEntity.State.paused) {
                 listener.onDownloadPaused(threadIndex);
-            }else{
+            } else if (state == DownloadEntity.State.cancelled) {
+                listener.onDownloadCancelled(threadIndex);
+            } else {
                 listener.onDownloadCompleted(threadIndex);
             }
 
         } catch (InterruptedException e) {
             e.printStackTrace();
-            if(state== DownloadEntity.State.paused){
+            if (state == DownloadEntity.State.paused) {
                 listener.onDownloadPaused(threadIndex);
             }
+        }finally {
+            isRunning = false;
         }
     }
 }

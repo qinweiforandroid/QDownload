@@ -25,6 +25,7 @@ public class DownloadService extends Service {
     public static final int NOTIFY_DOWNLOAD_PROGRESS_UPDATE = 3;
     public static final int NOTIFY_DOWNLOAD_COMPLETED = 4;
     public static final int NOTIFY_DOWNLOAD_PAUSED = 5;
+    public static final int NOTIFY_DOWNLOAD_CANCELLED = 6;
     public LinkedBlockingQueue<DownloadEntity> mDownloadWaitQueues;//保存等待下载的任务队列
     public HashMap<String, DownloadTask> mDownloadingTasks;//保存正在下载的任务
     private ExecutorService mExecutors;
@@ -92,7 +93,7 @@ public class DownloadService extends Service {
         DownloadChanger.getInstance(getApplicationContext()).addOperationTasks(entity);
         DLog.d(TAG, entity.id + " add mDownloadingTasks size:" + mDownloadingTasks.size());
         if (mDownloadingTasks.size() >= DownloadConfig.MAX_DOWNLOAD_TASK_SIZE) {
-            entity.state= DownloadEntity.State.wait;
+            entity.state = DownloadEntity.State.wait;
             mDownloadWaitQueues.offer(entity);
             DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
             DLog.d(TAG, entity.id + " add 达到最大下载数 添加到等待队列mDownloadWaitQueues size:" + mDownloadWaitQueues.size());
@@ -116,18 +117,28 @@ public class DownloadService extends Service {
 
     private void stop(DownloadEntity entity) {
         DLog.d(TAG, entity.id + " pause");
-        DownloadTask task=mDownloadingTasks.get(entity.id);
-        if(task!=null){
+        DownloadTask task = mDownloadingTasks.get(entity.id);
+        if (task != null) {
             task.stop();
-        }else{
-            entity.state= DownloadEntity.State.paused;
+        } else {
+            entity.state = DownloadEntity.State.paused;
             mDownloadWaitQueues.remove(entity);
+            DLog.d(TAG, entity.id + " stop mDownloadWaitQueues remove |size:"+mDownloadWaitQueues.size());
             DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
         }
     }
 
     private void cancel(DownloadEntity entity) {
         DLog.d(TAG, entity.id + " cancel");
+        DownloadTask task = mDownloadingTasks.get(entity.id);
+        if (task != null) {
+            task.cancel();
+        } else {
+            entity.state = DownloadEntity.State.cancelled;
+            mDownloadWaitQueues.remove(entity);
+            DLog.d(TAG, entity.id + " cancel mDownloadWaitQueues remove |size:"+mDownloadWaitQueues.size());
+            DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
+        }
     }
 
     private void stopAll(DownloadEntity entity) {

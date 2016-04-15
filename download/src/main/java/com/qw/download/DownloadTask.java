@@ -5,6 +5,7 @@ import android.os.Message;
 
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 /**
  * 下载任务
@@ -18,6 +19,9 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
     private final Handler mHandler;
     private DownloadThread[] threads;
     private DownloadEntity.State[] states;
+    private DownloadConnectThread connectThread;
+    private Future<?> connectThreadFuture;
+    private Future<?>[] futures;
 
     public DownloadTask(DownloadEntity entity, ExecutorService mExecutors, Handler handler) {
         this.entity = entity;
@@ -33,12 +37,42 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
         }
     }
 
+    private void doConnectDownloadFile() {
+        DLog.d(TAG, entity.id + " doConnectDownloadFile");
+        connectThread = new DownloadConnectThread(entity);
+        connectThread.setOnConnectThreadListener(this);
+        connectThreadFuture = mExecutors.submit(connectThread);
+        entity.state = DownloadEntity.State.connect;
+        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_CONNECTING);
+    }
+
     public void stop() {
-        for (int i = 0; i < threads.length; i++) {
-            if (threads[i] != null && threads[i].isRunning()) {
-                threads[i].pause();
+        if (connectThread != null && connectThread.isRunning()) {
+            connectThread.cancel(DownloadEntity.State.paused);
+            connectThreadFuture.cancel(true);
+        } else {
+            for (int i = 0; i < threads.length; i++) {
+                if (threads[i] != null && threads[i].isRunning()) {
+                    threads[i].pause();
+                    futures[i].cancel(true);
+                }
             }
         }
+    }
+
+    public void cancel() {
+        if (connectThread != null && connectThread.isRunning()) {
+            connectThread.cancel(DownloadEntity.State.cancelled);
+            connectThreadFuture.cancel(true);
+        } else {
+            for (int i = 0; i < threads.length; i++) {
+                if (threads[i] != null && threads[i].isRunning()) {
+                    threads[i].cancel();
+                    futures[i].cancel(true);
+                }
+            }
+        }
+
     }
 
     private void startDownload() {
@@ -56,6 +90,7 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
     private void startMultithreadingDownload() {
         DLog.d(TAG, entity.id + " startMultithreadingDownload");
         threads = new DownloadThread[DownloadConfig.MAX_DOWNLOAD_THREAD_SIZE];
+        futures = new Future<?>[DownloadConfig.MAX_DOWNLOAD_THREAD_SIZE];
         states = new DownloadEntity.State[DownloadConfig.MAX_DOWNLOAD_THREAD_SIZE];
         int start = 0;
         int end = 0;
@@ -77,7 +112,8 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
                 threads[i] = new DownloadThread(entity, i, start, end);
                 states[i] = DownloadEntity.State.ing;
                 threads[i].setOnDownloadListener(this);
-                mExecutors.execute(threads[i]);
+//                mExecutors.execute(threads[i]);
+                futures[i] = mExecutors.submit(threads[i]);
             } else {
                 states[i] = DownloadEntity.State.done;
             }
@@ -88,17 +124,9 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
         DLog.d(TAG, entity.id + " startSingThreadDownload");
     }
 
-    private void doConnectDownloadFile() {
-        DLog.d(TAG, entity.id + " doConnectDownloadFile");
-        DownloadConnectThread connectThread = new DownloadConnectThread(entity);
-        connectThread.setOnConnectThreadListener(this);
-        mExecutors.execute(connectThread);
-        entity.state = DownloadEntity.State.connect;
-        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_CONNECTING);
-    }
 
     @Override
-    public void onConnectCompleted(long contentLength, boolean isSupportRange) {
+    public synchronized void onConnectCompleted(long contentLength, boolean isSupportRange) {
         entity.isSupportRange = isSupportRange;
         entity.contentLength = contentLength;
         DLog.d(TAG, entity.id + " onConnectCompleted contentLength:" + contentLength + ",isSupportRange:" + isSupportRange);
@@ -106,9 +134,9 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
     }
 
     @Override
-    public void onConnectError(String msg) {
-        entity.state = DownloadEntity.State.error;
-        DLog.d(TAG, entity.id + " onConnectError " + msg);
+    public synchronized void onConnectError(DownloadEntity.State state, String msg) {
+        entity.state = state;
+        DLog.d(TAG, entity.id + " onConnectError " + state.name());
         notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ERROR);
     }
 
@@ -168,7 +196,18 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
 
     @Override
     public synchronized void onDownloadCancelled(int index) {
-
+        DLog.d(TAG, entity.id + " onDownloadCancelled thread index " + index);
+        states[index] = DownloadEntity.State.cancelled;
+        for (int i = 0; i < states.length; i++) {
+            if (states[i] == DownloadEntity.State.ing) {
+                return;
+            }
+        }
+//        TODO delete file cache
+        entity.state = DownloadEntity.State.cancelled;
+        entity.reset();
+        DLog.d(TAG, entity.id + " onDownloadCancelled notifyUpdate download state: " + entity.state.name());
+        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_CANCELLED);
     }
 
 

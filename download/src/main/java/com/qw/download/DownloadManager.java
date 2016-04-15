@@ -39,6 +39,7 @@ public class DownloadManager {
 
     /**
      * 暂停下载
+     *
      * @param entity
      */
     public void pauseDownload(DownloadEntity entity) {
@@ -47,8 +48,10 @@ public class DownloadManager {
         intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ACTION, DownloadConstants.KEY_DOWNLOAD_ACTION_PAUSE);
         context.startService(intent);
     }
+
     /**
      * 恢复下载
+     *
      * @param entity
      */
     public void resumeDownload(DownloadEntity entity) {
@@ -57,8 +60,10 @@ public class DownloadManager {
         intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ACTION, DownloadConstants.KEY_DOWNLOAD_ACTION_RESUME);
         context.startService(intent);
     }
+
     /**
      * 取消下载
+     *
      * @param entity
      */
     public void cancelDownload(DownloadEntity entity) {
@@ -75,6 +80,4 @@ public class DownloadManager {
     public void removeObserver(DownloadWatcher watcher) {
         DownloadChanger.getInstance(context).deleteObserver(watcher);
     }
-
-
 }

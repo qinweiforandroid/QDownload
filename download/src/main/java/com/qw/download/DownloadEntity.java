@@ -1,6 +1,7 @@
 package com.qw.download;
 
 import java.io.Serializable;
+import java.util.HashMap;
 
 /**
  * Created by qinwei on 2016/4/14 17:16
@@ -13,9 +14,14 @@ public class DownloadEntity implements Serializable {
     public long contentLength;
     public long currentLength;
     public State state;
+    public HashMap<Integer, Long> ranges;
 
     public enum State {
-        idle, connect, ing, resume, stopped, cancelled, error, done, wait
+        idle, connect, ing, resume, paused, cancelled, error, done, wait
     }
 
+    @Override
+    public String toString() {
+        return id + " is " + state.name() + " " + currentLength + "/" + contentLength;
+    }
 }

@@ -12,13 +12,25 @@ public class DownloadThread implements Runnable {
     private int start;
     private int end;
     private OnDownloadListener listener;
-
+    private boolean isRunning;
+    private DownloadEntity.State state;
     public DownloadThread(DownloadEntity entity, int threadIndex, int start, int end) {
         this.entity = entity;
         this.threadIndex = threadIndex;
         this.start = start;
         this.end = end;
         DLog.d(TAG,"threadIndex "+threadIndex+" start-end:"+start+"_"+end);
+    }
+
+    public boolean isRunning() {
+        return isRunning;
+    }
+
+    public void pause() {
+        state= DownloadEntity.State.paused;
+        isRunning=false;
+        DLog.d(TAG,"pause interrupt threadIndex "+threadIndex);
+        Thread.currentThread().interrupt();
     }
 
     public interface OnDownloadListener {
@@ -40,8 +52,10 @@ public class DownloadThread implements Runnable {
     @Override
     public void run() {
         try {
+            state= DownloadEntity.State.ing;
+            isRunning=true;
             int buffer = 1000;
-            while (true) {
+            while (isRunning) {
                 Thread.sleep(500);
                 start += buffer;
                 if (start < end) {
@@ -51,9 +65,17 @@ public class DownloadThread implements Runnable {
                     break;
                 }
             }
-            listener.onDownloadCompleted(threadIndex);
+            if(state== DownloadEntity.State.paused){
+                listener.onDownloadPaused(threadIndex);
+            }else{
+                listener.onDownloadCompleted(threadIndex);
+            }
+
         } catch (InterruptedException e) {
             e.printStackTrace();
+            if(state== DownloadEntity.State.paused){
+                listener.onDownloadPaused(threadIndex);
+            }
         }
     }
 }

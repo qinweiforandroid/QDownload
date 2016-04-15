@@ -10,7 +10,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  * Created by qinwei on 2016/4/14 16:05
  * email:qinwei_it@163.com
  */
-public class DownloadDBHelper extends SQLiteOpenHelper{
+public class DownloadDBHelper extends SQLiteOpenHelper {
 
     public DownloadDBHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
         super(context, name, factory, version);
@@ -22,7 +22,6 @@ public class DownloadDBHelper extends SQLiteOpenHelper{
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-
     }
 
     @Override

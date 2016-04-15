@@ -24,6 +24,7 @@ public class DownloadService extends Service {
     public static final int NOTIFY_DOWNLOAD_ING = 2;
     public static final int NOTIFY_DOWNLOAD_PROGRESS_UPDATE = 3;
     public static final int NOTIFY_DOWNLOAD_COMPLETED = 4;
+    public static final int NOTIFY_DOWNLOAD_PAUSED = 5;
     public LinkedBlockingQueue<DownloadEntity> mDownloadWaitQueues;//保存等待下载的任务队列
     public HashMap<String, DownloadTask> mDownloadingTasks;//保存正在下载的任务
     private ExecutorService mExecutors;
@@ -31,6 +32,8 @@ public class DownloadService extends Service {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
+            DownloadEntity e = (DownloadEntity) msg.obj;
+            DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(e);
         }
     };
 
@@ -65,11 +68,11 @@ public class DownloadService extends Service {
             case DownloadConstants.KEY_DOWNLOAD_ACTION_ADD:
                 add(entity);
                 break;
+            case DownloadConstants.KEY_DOWNLOAD_ACTION_PAUSE:
+                stop(entity);
+                break;
             case DownloadConstants.KEY_DOWNLOAD_ACTION_RESUME:
                 resume(entity);
-                break;
-            case DownloadConstants.KEY_DOWNLOAD_ACTION_STOP:
-                stop(entity);
                 break;
             case DownloadConstants.KEY_DOWNLOAD_ACTION_CANCEL:
                 cancel(entity);
@@ -86,9 +89,12 @@ public class DownloadService extends Service {
     }
 
     private void add(DownloadEntity entity) {
+        DownloadChanger.getInstance(getApplicationContext()).addOperationTasks(entity);
         DLog.d(TAG, entity.id + " add mDownloadingTasks size:" + mDownloadingTasks.size());
         if (mDownloadingTasks.size() >= DownloadConfig.MAX_DOWNLOAD_TASK_SIZE) {
+            entity.state= DownloadEntity.State.wait;
             mDownloadWaitQueues.offer(entity);
+            DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
             DLog.d(TAG, entity.id + " add 达到最大下载数 添加到等待队列mDownloadWaitQueues size:" + mDownloadWaitQueues.size());
         } else {
             start(entity);
@@ -105,10 +111,19 @@ public class DownloadService extends Service {
 
     private void resume(DownloadEntity entity) {
         DLog.d(TAG, entity.id + " resume");
+        add(entity);
     }
 
     private void stop(DownloadEntity entity) {
-        DLog.d(TAG, entity.id + " stop");
+        DLog.d(TAG, entity.id + " pause");
+        DownloadTask task=mDownloadingTasks.get(entity.id);
+        if(task!=null){
+            task.stop();
+        }else{
+            entity.state= DownloadEntity.State.paused;
+            mDownloadWaitQueues.remove(entity);
+            DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
+        }
     }
 
     private void cancel(DownloadEntity entity) {

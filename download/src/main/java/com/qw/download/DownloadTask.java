@@ -3,6 +3,7 @@ package com.qw.download;
 import android.os.Handler;
 import android.os.Message;
 
+import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -32,6 +33,14 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
         }
     }
 
+    public void stop() {
+        for (int i = 0; i < threads.length; i++) {
+            if (threads[i] != null && threads[i].isRunning()) {
+                threads[i].pause();
+            }
+        }
+    }
+
     private void startDownload() {
         DLog.d(TAG, entity.id + " startDownload");
         entity.state = DownloadEntity.State.ing;
@@ -50,18 +59,28 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
         states = new DownloadEntity.State[DownloadConfig.MAX_DOWNLOAD_THREAD_SIZE];
         int start = 0;
         int end = 0;
+        if (entity.ranges == null) {
+            entity.ranges = new HashMap<>();
+            for (int i = 0; i < DownloadConfig.MAX_DOWNLOAD_THREAD_SIZE; i++) {
+                entity.ranges.put(i, (long) 0);
+            }
+        }
         int block = (int) (entity.contentLength / threads.length);
         for (int i = 0; i < threads.length; i++) {
-            start = i * block;
+            start = (int) (i * block + entity.ranges.get(i));
             if (i != threads.length - 1) {
                 end = (i + 1) * block;
             } else {
                 end = (int) entity.contentLength;
             }
-            threads[i] = new DownloadThread(entity, i, start, end);
-            states[i] = DownloadEntity.State.ing;
-            threads[i].setOnDownloadListener(this);
-            mExecutors.execute(threads[i]);
+            if (start < end) {
+                threads[i] = new DownloadThread(entity, i, start, end);
+                states[i] = DownloadEntity.State.ing;
+                threads[i].setOnDownloadListener(this);
+                mExecutors.execute(threads[i]);
+            } else {
+                states[i] = DownloadEntity.State.done;
+            }
         }
     }
 
@@ -101,17 +120,23 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
         mHandler.sendMessage(msg);
     }
 
+    long tmp;
+
     @Override
     public synchronized void onDownloadProgressUpdate(int index, long progress) {
         entity.currentLength += progress;
-        DLog.d(TAG, entity.id + " onDownloadProgressUpdate thread index " + index + "," + entity.currentLength + "/" + entity.contentLength);
-        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_PROGRESS_UPDATE);
+        entity.ranges.put(index, entity.ranges.get(index) + progress);
+        if (System.currentTimeMillis() - tmp >= 1000) {
+            DLog.d(TAG, entity.id + " onDownloadProgressUpdate thread index " + index + "," + entity.currentLength + "/" + entity.contentLength);
+            notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_PROGRESS_UPDATE);
+            tmp = System.currentTimeMillis();
+        }
     }
 
     @Override
     public synchronized void onDownloadCompleted(int index) {
-        states[index] = DownloadEntity.State.done;
         DLog.d(TAG, entity.id + " onDownloadCompleted thread index " + index);
+        states[index] = DownloadEntity.State.done;
         for (int i = 0; i < states.length; i++) {
             if (states[i] != DownloadEntity.State.done) {
                 return;
@@ -129,11 +154,22 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
 
     @Override
     public synchronized void onDownloadPaused(int index) {
-
+        DLog.d(TAG, entity.id + " onDownloadPaused thread index " + index);
+        states[index] = DownloadEntity.State.paused;
+        for (int i = 0; i < states.length; i++) {
+            if (states[i] == DownloadEntity.State.ing) {
+                return;
+            }
+        }
+        entity.state = DownloadEntity.State.paused;
+        DLog.d(TAG, entity.id + " onDownloadPaused notifyUpdate download state: " + entity.state.name());
+        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_PAUSED);
     }
 
     @Override
     public synchronized void onDownloadCancelled(int index) {
 
     }
+
+
 }

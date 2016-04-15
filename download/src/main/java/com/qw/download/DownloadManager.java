@@ -36,4 +36,45 @@ public class DownloadManager {
         intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ACTION, DownloadConstants.KEY_DOWNLOAD_ACTION_ADD);
         context.startService(intent);
     }
+
+    /**
+     * 暂停下载
+     * @param entity
+     */
+    public void pauseDownload(DownloadEntity entity) {
+        Intent intent = new Intent(context, DownloadService.class);
+        intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ENTITY, entity);
+        intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ACTION, DownloadConstants.KEY_DOWNLOAD_ACTION_PAUSE);
+        context.startService(intent);
+    }
+    /**
+     * 恢复下载
+     * @param entity
+     */
+    public void resumeDownload(DownloadEntity entity) {
+        Intent intent = new Intent(context, DownloadService.class);
+        intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ENTITY, entity);
+        intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ACTION, DownloadConstants.KEY_DOWNLOAD_ACTION_RESUME);
+        context.startService(intent);
+    }
+    /**
+     * 取消下载
+     * @param entity
+     */
+    public void cancelDownload(DownloadEntity entity) {
+        Intent intent = new Intent(context, DownloadService.class);
+        intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ENTITY, entity);
+        intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ACTION, DownloadConstants.KEY_DOWNLOAD_ACTION_CANCEL);
+        context.startService(intent);
+    }
+
+    public void addObserver(DownloadWatcher watcher) {
+        DownloadChanger.getInstance(context).addObserver(watcher);
+    }
+
+    public void removeObserver(DownloadWatcher watcher) {
+        DownloadChanger.getInstance(context).deleteObserver(watcher);
+    }
+
+
 }

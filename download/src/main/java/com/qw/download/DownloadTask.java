@@ -111,7 +111,7 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
             DLog.d(TAG, entity.ranges + "");
             start = (int) (i * block + entity.ranges.get(i));
             if (i != threads.length - 1) {
-                end = (i + 1) * block;
+                end = (i + 1) * block-1;
             } else {
                 end = (int) entity.contentLength;
             }

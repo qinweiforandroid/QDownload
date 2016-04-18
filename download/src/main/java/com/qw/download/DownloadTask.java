@@ -3,6 +3,7 @@ package com.qw.download;
 import android.os.Handler;
 import android.os.Message;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -225,7 +226,8 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
             }
         }
 
-        if(currentRetryIndex<DownloadConfig.MAX_RETRY_COUNT){
+        //只有支持断点续传 才能进行重试恢复下载操作
+        if(currentRetryIndex<DownloadConfig.MAX_RETRY_COUNT&&entity.isSupportRange){
             DLog.d(TAG, "----------"+entity.id + " onDownloadError doConnectDownloadFile retry "  + currentRetryIndex+"----------");
             currentRetryIndex++;
             startDownload();
@@ -261,7 +263,10 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
                 return;
             }
         }
-//        TODO delete file cache
+        File file=new File(DownloadConfig.getDownloadPath(entity.id));
+        if(file.exists()){
+            file.delete();
+        }
         entity.state = DownloadEntity.State.cancelled;
         entity.reset();
         DLog.d(TAG, entity.id + " onDownloadCancelled notifyUpdate download state: " + entity.state.name());

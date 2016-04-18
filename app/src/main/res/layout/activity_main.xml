@@ -11,9 +11,18 @@
     tools:context="com.qw.example.MainActivity">
 
     <TextView
+        android:id="@+id/mDownloadTitleLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/activity_horizontal_margin"
+        android:textColor="#f0f"
+        android:textSize="16sp"/>
+
+    <TextView
         android:id="@+id/mDownloadInfoLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="下载过程文件基本信息显示"
         android:padding="@dimen/activity_horizontal_margin" />
 
     <Button
@@ -21,26 +30,34 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="开始下载" />
+
     <Button
         android:id="@+id/mDownloadStopBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="暂停下载" />
+
     <Button
         android:id="@+id/mDownloadResumeBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="恢复下载" />
+
     <Button
         android:id="@+id/mDownloadCancelBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="取消下载" />
+    <Button
+        android:id="@+id/mDownloadClearBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="清空本地文件和数据库缓存" />
 
     <Button
         android:layout_width="wrap_content"
-        android:layout_marginTop="@dimen/activity_horizontal_margin"
         android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/activity_horizontal_margin"
         android:onClick="goList"
-        android:text="多任务断点下载"/>
+        android:text="多任务断点下载" />
 </LinearLayout>

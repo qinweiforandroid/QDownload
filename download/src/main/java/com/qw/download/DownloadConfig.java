@@ -15,7 +15,7 @@ public class DownloadConfig {
     public static final int CONNECT_TIME = 15 * 1000;
     public static final int READ_TIME = 15 * 1000;
     public static final int MAX_RETRY_COUNT=3;
-    private static String download_dir = "/download/";
+    public static String download_dir = "/download/";
 
     public static String getRoot() {
         return Environment.getExternalStorageDirectory().getAbsolutePath();

@@ -115,7 +115,7 @@ public class DownloadDBController {
             e.url = cursor.getString(cursor.getColumnIndex("url"));
             e.contentLength = cursor.getInt(cursor.getColumnIndex("contentLength"));
             e.currentLength = cursor.getInt(cursor.getColumnIndex("currentLength"));
-            e.ranges = gson.fromJson(cursor.getString(cursor.getColumnIndex("ranges")),  new TypeToken<HashMap<Integer, Long>>() {
+            e.ranges = gson.fromJson(cursor.getString(cursor.getColumnIndex("ranges")), new TypeToken<HashMap<Integer, Long>>() {
             }.getType());
             e.isSupportRange = cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0 ? true : false;
             e.state = Enum.valueOf(DownloadEntity.State.class, cursor.getString(cursor.getColumnIndex("state")));
@@ -123,5 +123,27 @@ public class DownloadDBController {
         }
         cursor.close();
         return es;
+    }
+
+    public boolean delete(DownloadEntity e) {
+        long number = getDB().delete("DB_DOWNLOAD", "id=?", new String[]{e.id});
+        DLog.d(TAG, "delete " + e.toString() + " " + number);
+        return number > 0;
+    }
+
+    public boolean delete(ArrayList<DownloadEntity> es) {
+        String[] ids = new String[es.size()];
+        for (int i = 0; i < es.size(); i++) {
+            ids[i] = es.get(i).id;
+        }
+        long number = getDB().delete("DB_DOWNLOAD", "id=?", ids);
+        DLog.d(TAG, " delete " + number);
+        return number > 0;
+    }
+
+    public boolean deleteAll() {
+        long number = getDB().delete("DB_DOWNLOAD", null, null);
+        DLog.d(TAG, "deleteAll " + number);
+        return number > 0;
     }
 }

@@ -22,7 +22,7 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
     private DownloadConnectThread connectThread;
     private Future<?> connectThreadFuture;
     private Future<?>[] futures;
-
+    private int currentRetryIndex;
     public DownloadTask(DownloadEntity entity, ExecutorService mExecutors, Handler handler) {
         this.entity = entity;
         this.mExecutors = mExecutors;
@@ -30,6 +30,7 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
     }
 
     public void start() {
+        currentRetryIndex=0;
         if (entity.contentLength == 0) {
             doConnectDownloadFile();
         } else {
@@ -153,18 +154,26 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
     public synchronized void onConnectError(DownloadEntity.State state, String msg) {
         entity.state = state;
         DLog.d(TAG, entity.id + " onConnectError " + state.name() + " msg:" + msg);
-        switch (state) {
-            case paused:
-                notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_PAUSED);
-                break;
-            case cancelled:
-                notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_CANCELLED);
-                break;
-            case error:
-                notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ERROR);
-                break;
-            default:
-                break;
+
+        if(currentRetryIndex<DownloadConfig.MAX_RETRY_COUNT){
+            DLog.d(TAG, "----------"+entity.id + " onConnectError doConnectDownloadFile retry "  + currentRetryIndex+"----------");
+            currentRetryIndex++;
+            doConnectDownloadFile();
+        }else{
+            currentRetryIndex=0;
+            switch (state) {
+                case paused:
+                    notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_PAUSED);
+                    break;
+                case cancelled:
+                    notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_CANCELLED);
+                    break;
+                case error:
+                    notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ERROR);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 
@@ -215,9 +224,18 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
                 return;
             }
         }
-        entity.state = DownloadEntity.State.error;
-        DLog.d(TAG, entity.id + " onDownloadError notifyUpdate download state: " + entity.state.name());
-        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ERROR);
+
+        if(currentRetryIndex<DownloadConfig.MAX_RETRY_COUNT){
+            DLog.d(TAG, "----------"+entity.id + " onDownloadError doConnectDownloadFile retry "  + currentRetryIndex+"----------");
+            currentRetryIndex++;
+            startDownload();
+        }else{
+            entity.state = DownloadEntity.State.error;
+            DLog.d(TAG, entity.id + " onDownloadError notifyUpdate download state: " + entity.state.name());
+            notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ERROR);
+        }
+
+
     }
 
     @Override

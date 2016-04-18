@@ -7,6 +7,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -74,10 +75,23 @@ public class DownloadService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        initDownload();
+    }
+
+    private void initDownload() {
+        DLog.d(TAG, "initDownload (Executors、mDownloadWaitQueues、mDownloadingTasks、DB、DownloadChanger)");
         mExecutors = Executors.newCachedThreadPool();
         mDownloadWaitQueues = new LinkedBlockingQueue<>();
         mDownloadingTasks = new HashMap<>();
-        DLog.d(TAG, "下载服务初始化");
+        DownloadDBController.getInstance(getApplicationContext()).getDB();
+        ArrayList<DownloadEntity> es = DownloadDBController.getInstance(getApplicationContext()).queryAll();
+        DownloadChanger.getInstance(getApplicationContext()).init(es);
+        for (int i = 0; i < es.size(); i++) {
+            DownloadEntity e = es.get(i);
+            if(e.state== DownloadEntity.State.ing||e.state== DownloadEntity.State.wait){
+                add(e);
+            }
+        }
     }
 
     @Override
@@ -120,13 +134,17 @@ public class DownloadService extends Service {
         DownloadChanger.getInstance(getApplicationContext()).addOperationTasks(entity);
         DLog.d(TAG, entity.id + " add mDownloadingTasks size:" + mDownloadingTasks.size());
         if (mDownloadingTasks.size() >= DownloadConfig.MAX_DOWNLOAD_TASK_SIZE) {
-            entity.state = DownloadEntity.State.wait;
-            mDownloadWaitQueues.offer(entity);
-            DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
-            DLog.d(TAG, entity.id + " add 达到最大下载数 添加到等待队列mDownloadWaitQueues size:" + mDownloadWaitQueues.size());
+            addQueues(entity);
         } else {
             start(entity);
         }
+    }
+
+    private void addQueues(DownloadEntity entity) {
+        entity.state = DownloadEntity.State.wait;
+        mDownloadWaitQueues.offer(entity);
+        DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
+        DLog.d(TAG, entity.id + " addQueues 添加到等待队列mDownloadWaitQueues size:" + mDownloadWaitQueues.size());
     }
 
     private void start(DownloadEntity entity) {
@@ -174,5 +192,11 @@ public class DownloadService extends Service {
 
     private void recoverAll(DownloadEntity entity) {
         DLog.d(TAG, entity.id + " recoverAll");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        DLog.d(TAG,"onDestroy");
     }
 }

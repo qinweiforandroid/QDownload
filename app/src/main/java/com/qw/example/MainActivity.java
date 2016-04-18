@@ -33,6 +33,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        DownloadManager.getInstance(this);
         assignViews();
     }
 
@@ -52,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         if (entity == null) {
             entity = new DownloadEntity();
-            entity.id = "qq.apk" + System.currentTimeMillis();
+            entity.id = "qq.apk";
             entity.url = "http://www.baidu.com";
         }
         switch (v.getId()) {
@@ -85,8 +86,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         DownloadManager.getInstance(this).removeObserver(watcher);
     }
 
-    public void goList(View v){
-        Intent intent=new Intent(this,ListActivity.class);
+    public void goList(View v) {
+        Intent intent = new Intent(this, ListActivity.class);
         startActivity(intent);
     }
 }

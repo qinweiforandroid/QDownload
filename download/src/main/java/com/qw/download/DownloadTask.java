@@ -95,13 +95,15 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
         int start = 0;
         int end = 0;
         if (entity.ranges == null) {
+            DLog.d(TAG, entity.id + " startMultithreadingDownload init ranges");
             entity.ranges = new HashMap<>();
             for (int i = 0; i < DownloadConfig.MAX_DOWNLOAD_THREAD_SIZE; i++) {
-                entity.ranges.put(i, (long) 0);
+                entity.ranges.put(i, 0l);
             }
         }
         int block = (int) (entity.contentLength / threads.length);
         for (int i = 0; i < threads.length; i++) {
+            DLog.d(TAG,entity.ranges+"");
             start = (int) (i * block + entity.ranges.get(i));
             if (i != threads.length - 1) {
                 end = (i + 1) * block;

@@ -2,6 +2,7 @@ package com.qw.download;
 
 import android.content.Context;
 import android.database.DatabaseErrorHandler;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -22,6 +23,19 @@ public class DownloadDBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        try {
+            db.execSQL("CREATE TABLE DB_DOWNLOAD  (" +
+                    "id  TEXT NOT NULL," +
+                    "url  TEXT," +
+                    "contentLength  INTEGER DEFAULT 0," +
+                    "currentLength  INTEGER DEFAULT 0," +
+                    "state  TEXT," +
+                    "ranges  TEXT," +
+                    "isSupportRange  INTEGER," +
+                    "PRIMARY KEY (id)" +");");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

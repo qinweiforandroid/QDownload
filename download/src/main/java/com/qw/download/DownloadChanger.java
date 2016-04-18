@@ -2,6 +2,7 @@ package com.qw.download;
 
 import android.content.Context;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Observable;
 
@@ -13,10 +14,11 @@ import java.util.Observable;
 public class DownloadChanger extends Observable {
     private static DownloadChanger mInstance;
     private Context context;
-    private LinkedHashMap<String ,DownloadEntity> mOperationTasks;//用于暂停恢复下载缓存
+    private LinkedHashMap<String, DownloadEntity> mOperationTasks;//用于暂停恢复下载缓存
+
     public DownloadChanger(Context context) {
         this.context = context;
-        mOperationTasks=new LinkedHashMap<>();
+        mOperationTasks = new LinkedHashMap<>();
     }
 
     public static DownloadChanger getInstance(Context context) {
@@ -29,7 +31,8 @@ public class DownloadChanger extends Observable {
     }
 
     public void notifyDataChanged(DownloadEntity entity) {
-        mOperationTasks.put(entity.id,entity);
+        mOperationTasks.put(entity.id, entity);
+        DownloadDBController.getInstance(context).addOrUpdate(entity);
         setChanged();
         notifyObservers(entity);
     }
@@ -40,5 +43,11 @@ public class DownloadChanger extends Observable {
 
     public DownloadEntity findById(String id) {
         return mOperationTasks.get(id);
+    }
+
+    public void init(ArrayList<DownloadEntity> es) {
+        for (int i = 0; i < es.size(); i++) {
+            addOperationTasks(es.get(i));
+        }
     }
 }

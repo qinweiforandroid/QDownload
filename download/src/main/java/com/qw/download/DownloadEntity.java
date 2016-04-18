@@ -37,4 +37,13 @@ public class DownloadEntity implements Serializable {
         return id + " is " + state.name() + " " + currentLength + "/" + contentLength;
     }
 
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return o.hashCode()==this.hashCode();
+    }
 }

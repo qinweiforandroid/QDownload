@@ -8,6 +8,7 @@ DownloadManager.getInstance(this).resumeDownload(entity);//恢复一个下载任
 DownloadManager.getInstance(this).cancelDownload(entity);//取消一个下载任务
 
 在你需要观测的地方加上
+
     private DownloadWatcher watcher = new DownloadWatcher() {
         @Override
         protected void onDataChanged(DownloadEntity e) {

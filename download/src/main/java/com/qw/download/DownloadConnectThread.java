@@ -1,5 +1,10 @@
 package com.qw.download;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+
 /**
  * 获取下载文件基本信息线程
  * Created by qinwei on 2016/4/14 16:05
@@ -24,17 +29,41 @@ public class DownloadConnectThread implements Runnable {
 
     @Override
     public void run() {
-//        do request server
         running = true;
+        HttpURLConnection connection = null;
+        state = DownloadEntity.State.connect;
         try {
-            state = DownloadEntity.State.connect;
-            Thread.sleep(5000);
-            listener.onConnectCompleted(50001, false);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            listener.onConnectError(state, e.getMessage());
+            connection = (HttpURLConnection) new URL(entity.url).openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(DownloadConfig.CONNECT_TIME);
+            connection.setReadTimeout(DownloadConfig.READ_TIME);
+            connection.setRequestProperty("Range", "bytes=0-" + Integer.MAX_VALUE);
+            int contentLength = connection.getContentLength();
+            boolean isSupportRange = false;
+            int code = connection.getResponseCode();
+            if (code == HttpURLConnection.HTTP_PARTIAL) {
+                isSupportRange = true;
+            } else {
+                listener.onConnectError(DownloadEntity.State.error, "server error " + code);
+            }
+            listener.onConnectCompleted(contentLength, isSupportRange);
+        } catch (MalformedURLException e) {
+            listener.onConnectError(DownloadEntity.State.error, e.getMessage());
+        } catch (IOException e) {
+            switch (state) {
+                case paused:
+                case cancelled:
+                    listener.onConnectError(state, e.getMessage());
+                    break;
+                default:
+                    listener.onConnectError(DownloadEntity.State.error, e.getMessage());
+                    break;
+            }
         } finally {
             running = false;
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
     }
 
@@ -49,6 +78,5 @@ public class DownloadConnectThread implements Runnable {
     public void cancel(DownloadEntity.State state) {
         running = false;
         this.state = state;
-//        Thread.currentThread().interrupt();
     }
 }

@@ -1,5 +1,14 @@
 package com.qw.download;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.RandomAccessFile;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+
 /**
  * 下载线程
  * Created by qinwei on 2016/4/14 16:04
@@ -47,6 +56,24 @@ public class DownloadThread implements Runnable {
         DLog.d(TAG, "cancel interrupt threadIndex " + threadIndex);
     }
 
+    public void error() {
+        state = DownloadEntity.State.error;
+        isRunning = false;
+        DLog.d(TAG, "error interrupt threadIndex " + threadIndex);
+    }
+
+    private boolean isPause() {
+        return state == DownloadEntity.State.paused;
+    }
+
+    private boolean isCancelled() {
+        return state == DownloadEntity.State.cancelled;
+    }
+
+    public boolean isError() {
+        return state == DownloadEntity.State.error;
+    }
+
     public interface OnDownloadListener {
         void onDownloadProgressUpdate(int index, long progress);
 
@@ -66,50 +93,66 @@ public class DownloadThread implements Runnable {
     @Override
     public void run() {
         isRunning = true;
+        HttpURLConnection connection = null;
         try {
             state = DownloadEntity.State.ing;
-
-            if (isSingleThread) {
-                int buffer = 1000;
-                start = 0;
-                while (isRunning) {
-                    Thread.sleep(400);
-                    start += buffer;
-                    if (start < entity.contentLength) {
-                        listener.onDownloadProgressUpdate(threadIndex, buffer);
-                    } else {
-                        listener.onDownloadProgressUpdate(threadIndex, entity.contentLength - (start - buffer));
-                        break;
-                    }
-                }
-            } else {
-                int buffer = 1000;
-                while (isRunning) {
-                    Thread.sleep(500);
-                    start += buffer;
-                    if (start < end) {
-                        listener.onDownloadProgressUpdate(threadIndex, buffer);
-                    } else {
-                        listener.onDownloadProgressUpdate(threadIndex, end - (start - buffer));
-                        break;
-                    }
-                }
+            connection = (HttpURLConnection) new URL(entity.url).openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(DownloadConfig.CONNECT_TIME);
+            connection.setReadTimeout(DownloadConfig.READ_TIME);
+            if (!isSingleThread) {
+                connection.setRequestProperty("Range", "bytes=" + start + "-" + end);
             }
+            File file = new File(DownloadConfig.getDownloadPath(entity.id));
+            InputStream is = null;
+            int code = connection.getResponseCode();
 
+            if (code == HttpURLConnection.HTTP_PARTIAL) {
+                RandomAccessFile raf = new RandomAccessFile(file, "rw");
+                raf.seek(start);
+                is = connection.getInputStream();
+                byte[] buffer = new byte[2048];
+                int len = -1;
+                while ((len = is.read(buffer)) != -1) {
+                    if (isPause() || isCancelled() || isError()) {
+                        break;
+                    }
+                    raf.write(buffer, 0, len);
+                    listener.onDownloadProgressUpdate(threadIndex, len);
+                }
+                raf.close();
+            } else {
+                FileOutputStream fos = new FileOutputStream(file);
+                is = connection.getInputStream();
+                byte[] buffer = new byte[2048];
+                int len = -1;
+                while ((len = is.read(buffer)) != -1) {
+                    if (isPause() || isCancelled() || isError()) {
+                        break;
+                    }
+                    fos.write(buffer, 0, len);
+                    listener.onDownloadProgressUpdate(threadIndex, len);
+                }
+                fos.close();
+            }
             if (state == DownloadEntity.State.paused) {
                 listener.onDownloadPaused(threadIndex);
             } else if (state == DownloadEntity.State.cancelled) {
                 listener.onDownloadCancelled(threadIndex);
+            } else if (state == DownloadEntity.State.error) {
+                listener.onDownloadError(threadIndex, "error by frame");
             } else {
                 listener.onDownloadCompleted(threadIndex);
             }
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            listener.onDownloadError(threadIndex, e.getMessage());
+        } catch (IOException e) {
             if (state == DownloadEntity.State.paused) {
                 listener.onDownloadPaused(threadIndex);
             } else if (state == DownloadEntity.State.cancelled) {
                 listener.onDownloadCancelled(threadIndex);
+            } else {
+                listener.onDownloadError(threadIndex, e.getMessage());
             }
         } finally {
             isRunning = false;

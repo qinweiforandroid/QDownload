@@ -152,8 +152,20 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
     @Override
     public synchronized void onConnectError(DownloadEntity.State state, String msg) {
         entity.state = state;
-        DLog.d(TAG, entity.id + " onConnectError " + state.name());
-        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ERROR);
+        DLog.d(TAG, entity.id + " onConnectError " + state.name() + " msg:" + msg);
+        switch (state) {
+            case paused:
+                notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_PAUSED);
+                break;
+            case cancelled:
+                notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_CANCELLED);
+                break;
+            case error:
+                notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ERROR);
+                break;
+            default:
+                break;
+        }
     }
 
     public synchronized void notifyUpdate(int what) {
@@ -195,7 +207,17 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
 
     @Override
     public synchronized void onDownloadError(int index, String msg) {
-
+        DLog.d(TAG, entity.id + " onDownloadError thread index " + index + " msg:" + msg);
+        states[index] = DownloadEntity.State.error;
+        for (int i = 0; i < states.length; i++) {
+            if (states[i] == DownloadEntity.State.ing) {
+                threads[i].error();
+                return;
+            }
+        }
+        entity.state = DownloadEntity.State.error;
+        DLog.d(TAG, entity.id + " onDownloadError notifyUpdate download state: " + entity.state.name());
+        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ERROR);
     }
 
     @Override

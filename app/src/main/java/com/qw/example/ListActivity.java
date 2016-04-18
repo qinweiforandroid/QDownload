@@ -162,10 +162,9 @@ public class ListActivity extends AppCompatActivity {
     }
 
     public void initializeDatas() {
-        datas.add(new DownloadEntity("baidu.apk", "baidu"));
-        datas.add(new DownloadEntity("tengxun.apk", "tengxun"));
-        datas.add(new DownloadEntity("alibaba.apk", "alibaba"));
-        datas.add(new DownloadEntity("xiaomi.apk", "xiaomi"));
-        datas.add(new DownloadEntity("meizu.apk", "meizu"));
+        datas.add(new DownloadEntity("tengxunVideo.apk", "http://ftp-apk.pconline.com.cn/06ef61ad8dbd3995dfee8b42e338357f/pub/download/201010/TencentVideo_V4.7.1.10021_1161-0406.apk"));
+        datas.add(new DownloadEntity("winXin.apk", "http://gdown.baidu.com/data/wisegame/a2216288661d09b4/weixin_680.apk"));
+        datas.add(new DownloadEntity("tengxunVideo1.apk", "http://ftp-apk.pconline.com.cn/06ef61ad8dbd3995dfee8b42e338357f/pub/download/201010/TencentVideo_V4.7.1.10021_1161-0406.apk"));
+        datas.add(new DownloadEntity("winXin1.apk", "http://gdown.baidu.com/data/wisegame/a2216288661d09b4/weixin_680.apk"));
     }
 }

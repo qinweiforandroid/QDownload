@@ -7,6 +7,7 @@ package com.qw.download;
  */
 public class DownloadThread implements Runnable {
     public static final String TAG = "DownloadThread";
+    private boolean isSingleThread;
     private DownloadEntity entity;
     private int threadIndex;
     private int start;
@@ -20,7 +21,14 @@ public class DownloadThread implements Runnable {
         this.threadIndex = threadIndex;
         this.start = start;
         this.end = end;
-        DLog.d(TAG, "threadIndex " + threadIndex + " start-end:" + start + "_" + end);
+        DLog.d(TAG, "isSingleThread " + isSingleThread + " threadIndex " + threadIndex + " start-end:" + start + "_" + end);
+    }
+
+    public DownloadThread(DownloadEntity entity) {
+        this.entity = entity;
+        threadIndex = 0;
+        isSingleThread = true;
+        DLog.d(TAG, "isSingleThread " + isSingleThread + " threadIndex " + threadIndex);
     }
 
     public boolean isRunning() {
@@ -60,17 +68,34 @@ public class DownloadThread implements Runnable {
         isRunning = true;
         try {
             state = DownloadEntity.State.ing;
-            int buffer = 1000;
-            while (isRunning) {
-                Thread.sleep(500);
-                start += buffer;
-                if (start < end) {
-                    listener.onDownloadProgressUpdate(threadIndex, buffer);
-                } else {
-                    listener.onDownloadProgressUpdate(threadIndex, end - (start - buffer));
-                    break;
+
+            if (isSingleThread) {
+                int buffer = 1000;
+                start = 0;
+                while (isRunning) {
+                    Thread.sleep(400);
+                    start += buffer;
+                    if (start < entity.contentLength) {
+                        listener.onDownloadProgressUpdate(threadIndex, buffer);
+                    } else {
+                        listener.onDownloadProgressUpdate(threadIndex, entity.contentLength - (start - buffer));
+                        break;
+                    }
+                }
+            } else {
+                int buffer = 1000;
+                while (isRunning) {
+                    Thread.sleep(500);
+                    start += buffer;
+                    if (start < end) {
+                        listener.onDownloadProgressUpdate(threadIndex, buffer);
+                    } else {
+                        listener.onDownloadProgressUpdate(threadIndex, end - (start - buffer));
+                        break;
+                    }
                 }
             }
+
             if (state == DownloadEntity.State.paused) {
                 listener.onDownloadPaused(threadIndex);
             } else if (state == DownloadEntity.State.cancelled) {
@@ -83,8 +108,10 @@ public class DownloadThread implements Runnable {
             e.printStackTrace();
             if (state == DownloadEntity.State.paused) {
                 listener.onDownloadPaused(threadIndex);
+            } else if (state == DownloadEntity.State.cancelled) {
+                listener.onDownloadCancelled(threadIndex);
             }
-        }finally {
+        } finally {
             isRunning = false;
         }
     }

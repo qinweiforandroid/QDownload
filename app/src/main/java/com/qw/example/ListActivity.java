@@ -114,6 +114,7 @@ public class ListActivity extends AppCompatActivity {
                 case error:
                     mDownloadItemOperationBtn.setText("重试");
                     break;
+                case cancelled:
                 case idle:
                     mDownloadItemOperationBtn.setText("下载");
                     break;
@@ -138,6 +139,7 @@ public class ListActivity extends AppCompatActivity {
                     mDownloadItemOperationBtn.setText("暂停");
                     DownloadManager.getInstance(getApplicationContext()).pauseDownload(e);
                     break;
+                case cancelled:
                 case idle:
                     DownloadManager.getInstance(getApplicationContext()).addDownload(e);
                     break;

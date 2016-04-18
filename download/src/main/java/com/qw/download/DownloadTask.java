@@ -52,8 +52,13 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
             connectThreadFuture.cancel(true);
         } else {
             for (int i = 0; i < threads.length; i++) {
-                if (threads[i] != null && threads[i].isRunning()) {
-                    threads[i].pause();
+                if (entity.isSupportRange) {
+                    if (threads[i] != null && threads[i].isRunning()) {
+                        threads[i].pause();
+                        futures[i].cancel(true);
+                    }
+                } else {
+                    threads[i].cancel();
                     futures[i].cancel(true);
                 }
             }
@@ -82,7 +87,7 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
         if (entity.isSupportRange) {
             startMultithreadingDownload();
         } else {
-            startSingThreadDownload();
+            startSingleThreadDownload();
         }
     }
 
@@ -103,7 +108,7 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
         }
         int block = (int) (entity.contentLength / threads.length);
         for (int i = 0; i < threads.length; i++) {
-            DLog.d(TAG,entity.ranges+"");
+            DLog.d(TAG, entity.ranges + "");
             start = (int) (i * block + entity.ranges.get(i));
             if (i != threads.length - 1) {
                 end = (i + 1) * block;
@@ -122,8 +127,17 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
         }
     }
 
-    private void startSingThreadDownload() {
-        DLog.d(TAG, entity.id + " startSingThreadDownload");
+    private void startSingleThreadDownload() {
+        DLog.d(TAG, entity.id + " startSingleThreadDownload");
+        threads = new DownloadThread[1];
+        futures = new Future<?>[1];
+        states = new DownloadEntity.State[1];
+        threads[0] = new DownloadThread(entity);
+        threads[0].setOnDownloadListener(this);
+        states[0] = DownloadEntity.State.ing;
+        entity.state = DownloadEntity.State.ing;
+        futures[0] = mExecutors.submit(threads[0]);
+        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ING);
     }
 
 
@@ -155,7 +169,9 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
     @Override
     public synchronized void onDownloadProgressUpdate(int index, long progress) {
         entity.currentLength += progress;
-        entity.ranges.put(index, entity.ranges.get(index) + progress);
+        if (entity.isSupportRange) {
+            entity.ranges.put(index, entity.ranges.get(index) + progress);
+        }
         if (System.currentTimeMillis() - tmp >= 1000) {
             DLog.d(TAG, entity.id + " onDownloadProgressUpdate thread index " + index + "," + entity.currentLength + "/" + entity.contentLength);
             notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_PROGRESS_UPDATE);
@@ -211,6 +227,4 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
         DLog.d(TAG, entity.id + " onDownloadCancelled notifyUpdate download state: " + entity.state.name());
         notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_CANCELLED);
     }
-
-
 }

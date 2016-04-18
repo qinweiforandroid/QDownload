@@ -29,7 +29,7 @@ public class DownloadConnectThread implements Runnable {
         try {
             state = DownloadEntity.State.connect;
             Thread.sleep(5000);
-            listener.onConnectCompleted(50001, true);
+            listener.onConnectCompleted(50001, false);
         } catch (InterruptedException e) {
             e.printStackTrace();
             listener.onConnectError(state, e.getMessage());

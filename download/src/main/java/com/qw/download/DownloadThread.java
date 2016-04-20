@@ -45,12 +45,14 @@ public class DownloadThread implements Runnable {
     }
 
     public void pause() {
+        listener = null;
         state = DownloadEntity.State.paused;
         isRunning = false;
         DLog.d(TAG, "pause interrupt threadIndex " + threadIndex);
     }
 
     public void cancel() {
+        listener = null;
         state = DownloadEntity.State.cancelled;
         isRunning = false;
         DLog.d(TAG, "cancel interrupt threadIndex " + threadIndex);
@@ -80,9 +82,15 @@ public class DownloadThread implements Runnable {
         void onDownloadCompleted(int index);
 
         void onDownloadError(int index, String msg);
-
+        /**
+         * @deprecated
+         * @param index
+         */
         void onDownloadPaused(int index);
-
+        /**
+         * @deprecated
+         * @param index
+         */
         void onDownloadCancelled(int index);
     }
 
@@ -118,7 +126,8 @@ public class DownloadThread implements Runnable {
                         break;
                     }
                     raf.write(buffer, 0, len);
-                    listener.onDownloadProgressUpdate(threadIndex, len);
+                    if (listener != null)
+                        listener.onDownloadProgressUpdate(threadIndex, len);
                 }
                 raf.close();
             } else {
@@ -131,28 +140,37 @@ public class DownloadThread implements Runnable {
                         break;
                     }
                     fos.write(buffer, 0, len);
-                    listener.onDownloadProgressUpdate(threadIndex, len);
+                    if (listener != null)
+                        listener.onDownloadProgressUpdate(threadIndex, len);
                 }
                 fos.close();
             }
             if (state == DownloadEntity.State.paused) {
-                listener.onDownloadPaused(threadIndex);
+                if (listener != null)
+                    listener.onDownloadPaused(threadIndex);
             } else if (state == DownloadEntity.State.cancelled) {
-                listener.onDownloadCancelled(threadIndex);
+                if (listener != null)
+                    listener.onDownloadCancelled(threadIndex);
             } else if (state == DownloadEntity.State.error) {
-                listener.onDownloadError(threadIndex, "error by frame");
+                if (listener != null)
+                    listener.onDownloadError(threadIndex, "error by frame");
             } else {
-                listener.onDownloadCompleted(threadIndex);
+                if (listener != null)
+                    listener.onDownloadCompleted(threadIndex);
             }
         } catch (MalformedURLException e) {
-            listener.onDownloadError(threadIndex, e.getMessage());
+            if (listener != null)
+                listener.onDownloadError(threadIndex, e.getMessage());
         } catch (IOException e) {
             if (state == DownloadEntity.State.paused) {
-                listener.onDownloadPaused(threadIndex);
+                if (listener != null)
+                    listener.onDownloadPaused(threadIndex);
             } else if (state == DownloadEntity.State.cancelled) {
-                listener.onDownloadCancelled(threadIndex);
+                if (listener != null)
+                    listener.onDownloadCancelled(threadIndex);
             } else {
-                listener.onDownloadError(threadIndex, e.getMessage());
+                if (listener != null)
+                    listener.onDownloadError(threadIndex, e.getMessage());
             }
         } finally {
             isRunning = false;

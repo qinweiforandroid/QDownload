@@ -44,20 +44,25 @@ public class DownloadConnectThread implements Runnable {
             if (code == HttpURLConnection.HTTP_PARTIAL) {
                 isSupportRange = true;
             } else {
-                listener.onConnectError(DownloadEntity.State.error, "server error " + code);
+                if (listener != null)
+                    listener.onConnectError(DownloadEntity.State.error, "server error " + code);
             }
-            listener.onConnectCompleted(contentLength, isSupportRange);
+            if (listener != null)
+                listener.onConnectCompleted(contentLength, isSupportRange);
         } catch (MalformedURLException e) {
-            listener.onConnectError(DownloadEntity.State.error, e.getMessage());
+            if (listener != null)
+                listener.onConnectError(DownloadEntity.State.error, e.getMessage());
         } catch (IOException e) {
-            switch (state) {
-                case paused:
-                case cancelled:
-                    listener.onConnectError(state, e.getMessage());
-                    break;
-                default:
-                    listener.onConnectError(DownloadEntity.State.error, e.getMessage());
-                    break;
+            if (listener != null) {
+                switch (state) {
+                    case paused:
+                    case cancelled:
+                        listener.onConnectError(state, e.getMessage());
+                        break;
+                    default:
+                        listener.onConnectError(DownloadEntity.State.error, e.getMessage());
+                        break;
+                }
             }
         } finally {
             running = false;
@@ -76,6 +81,14 @@ public class DownloadConnectThread implements Runnable {
     }
 
     public void cancel(DownloadEntity.State state) {
+        switch (state) {
+            case paused:
+            case cancelled:
+                this.listener = null;
+                break;
+            default:
+                break;
+        }
         running = false;
         this.state = state;
     }

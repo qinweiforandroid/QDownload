@@ -66,6 +66,9 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
                 }
             }
         }
+        entity.state = DownloadEntity.State.paused;
+        DLog.d(TAG, entity.id + " onDownloadPaused notifyUpdate download state: " + entity.state.name());
+        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_PAUSED);
     }
 
     public void cancel() {
@@ -81,6 +84,14 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
             }
         }
 
+        File file = new File(DownloadConfig.getDownloadPath(entity.id));
+        if (file.exists()) {
+            file.delete();
+        }
+        entity.state = DownloadEntity.State.cancelled;
+        entity.reset();
+        DLog.d(TAG, entity.id + " onDownloadCancelled notifyUpdate download state: " + entity.state.name());
+        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_CANCELLED);
     }
 
     private void startDownload() {
@@ -93,7 +104,6 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
             startSingleThreadDownload();
         }
     }
-
 
     private void startMultithreadingDownload() {
         DLog.d(TAG, entity.id + " startMultithreadingDownload");

@@ -12,8 +12,8 @@ import java.io.File;
 public class DownloadConfig {
     public static final int MAX_DOWNLOAD_TASK_SIZE = 2;
     public static final int MAX_DOWNLOAD_THREAD_SIZE = 2;
-    public static final int CONNECT_TIME = 15 * 1000;
-    public static final int READ_TIME = 15 * 1000;
+    public static final int CONNECT_TIME = 5 * 1000;
+    public static final int READ_TIME =  5 * 1000;
     public static final int MAX_RETRY_COUNT=3;
     public static String download_dir = "/download/";
 

@@ -111,7 +111,7 @@ public class DownloadThread implements Runnable {
             if (!isSingleThread) {
                 connection.setRequestProperty("Range", "bytes=" + start + "-" + end);
             }
-            File file = new File(DownloadConfig.getDownloadPath(entity.id));
+            File file = new File(DownloadFileUtil.getDownloadPath(entity.id));
             InputStream is = null;
             int code = connection.getResponseCode();
 

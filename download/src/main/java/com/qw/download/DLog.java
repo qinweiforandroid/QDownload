@@ -8,6 +8,7 @@ import android.util.Log;
  */
 public class DLog {
     public static void d(String tag, String msg) {
-        Log.e(tag, msg);
+        if (DownloadConfig.getInstance().isDevelop)
+            Log.e(tag, msg);
     }
 }

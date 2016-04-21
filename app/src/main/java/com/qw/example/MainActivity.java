@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import com.qw.download.DLog;
 import com.qw.download.DownloadConfig;
+import com.qw.download.DownloadFileUtil;
 import com.qw.download.DownloadDBController;
 import com.qw.download.DownloadEntity;
 import com.qw.download.DownloadManager;
@@ -69,7 +70,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mDownloadResumeBtn.setOnClickListener(this);
         mDownloadCancelBtn.setOnClickListener(this);
         mDownloadClearBtn.setOnClickListener(this);
-        mDownloadTitleLabel.setText("下载文件夹路径:" + DownloadConfig.getDownloadDir(DownloadConfig.download_dir));
+        mDownloadTitleLabel.setText("下载文件夹路径:" + DownloadConfig.getInstance().getDownloadDirPath());
         reset();
     }
     private void initData() {
@@ -124,7 +125,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.mDownloadClearBtn:
                 reset();
                 mDownloadInfoLabel.setText("下载过程文件基本信息显示");
-                File file=new File(DownloadConfig.getDownloadPath("weixin680.apk"));
+                File file=new File(DownloadFileUtil.getDownloadPath("weixin680.apk"));
                 DLog.d("Main",file.getAbsolutePath());
                 if(file.exists()){
                     file.delete();

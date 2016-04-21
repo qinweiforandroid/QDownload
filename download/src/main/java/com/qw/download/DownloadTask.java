@@ -84,7 +84,7 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
             }
         }
 
-        File file = new File(DownloadConfig.getDownloadPath(entity.id));
+        File file = new File(DownloadFileUtil.getDownloadPath(entity.id));
         if (file.exists()) {
             file.delete();
         }
@@ -243,6 +243,13 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
             currentRetryIndex++;
             startDownload();
         } else {
+            if(entity.isSupportRange){
+                File file=new File(DownloadFileUtil.getDownloadPath(entity.id));
+                if(file.exists()){
+                    file.delete();
+                }
+                entity.reset();
+            }
             entity.state = DownloadEntity.State.error;
             DLog.d(TAG, entity.id + " onDownloadError notifyUpdate download state: " + entity.state.name());
             notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ERROR);
@@ -274,7 +281,7 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
                 return;
             }
         }
-        File file = new File(DownloadConfig.getDownloadPath(entity.id));
+        File file = new File(DownloadFileUtil.getDownloadPath(entity.id));
         if (file.exists()) {
             file.delete();
         }

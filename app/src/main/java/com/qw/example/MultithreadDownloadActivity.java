@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -15,24 +14,30 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.qw.download.DLog;
-import com.qw.download.DownloadConfig;
 import com.qw.download.DownloadDBController;
 import com.qw.download.DownloadEntity;
 import com.qw.download.DownloadFileUtil;
 import com.qw.download.DownloadManager;
 import com.qw.download.DownloadWatcher;
+import com.qw.example.core.BaseActivity;
 
 import java.io.File;
 
-public class MultithreadDownloadActivity extends AppCompatActivity implements View.OnClickListener {
+public class MultithreadDownloadActivity extends BaseActivity implements View.OnClickListener {
     private TextView mDownloadInfoLabel;
     private Button mDownloadAddBtn;
     private Button mDownloadStopBtn;
     private Button mDownloadResumeBtn;
     private Button mDownloadCancelBtn;
+    private Button mDownloadClearBtn;
+    private Button mDownloadNotificationShowBtn;
+    private NotificationManager mNotificationManager;
+    private NotificationCompat.Builder mBuilder;
+    DownloadEntity entity = null;
     private DownloadWatcher watcher = new DownloadWatcher() {
         @Override
         protected void onDataChanged(DownloadEntity e) {
+            if (!e.equals(entity)) return;
             entity = e;
             switch (e.state) {
                 case cancelled:
@@ -65,32 +70,29 @@ public class MultithreadDownloadActivity extends AppCompatActivity implements Vi
                         mBuilder.setContentText("连接中");
                         mNotificationManager.notify(0, mBuilder.build());
                     }
+                case error:
+                    if (mNotificationManager != null) {
+                        mBuilder.setContentText("下载失败，点击重试");
+                        mNotificationManager.notify(0, mBuilder.build());
+                    }
+                    mDownloadStopBtn.setEnabled(false);
+                    mDownloadResumeBtn.setEnabled(true);
+                    mDownloadCancelBtn.setEnabled(false);
                     break;
             }
             mDownloadInfoLabel.setText(e.toString());
-            Log.e("MultithreadDownloadActivity", e.toString());
+            Log.e("Multithread", e.toString());
         }
     };
 
-    DownloadEntity entity = null;
-    private TextView mDownloadTitleLabel;
-    private Button mDownloadClearBtn;
-    private Button mDownloadNotificationShowBtn;
-    private NotificationManager mNotificationManager;
-    private NotificationCompat.Builder mBuilder;
-
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void setContentView() {
         setContentView(R.layout.activity_multithread);
-        DownloadManager.getInstance(this);
-        initView();
-        initData();
     }
 
-    private void initView() {
+    @Override
+    protected void initializeView() {
         mDownloadInfoLabel = (TextView) findViewById(R.id.mDownloadInfoLabel);
-        mDownloadTitleLabel = (TextView) findViewById(R.id.mDownloadTitleLabel);
         mDownloadAddBtn = (Button) findViewById(R.id.mDownloadAddBtn);
         mDownloadStopBtn = (Button) findViewById(R.id.mDownloadStopBtn);
         mDownloadResumeBtn = (Button) findViewById(R.id.mDownloadResumeBtn);
@@ -104,11 +106,11 @@ public class MultithreadDownloadActivity extends AppCompatActivity implements Vi
         mDownloadCancelBtn.setOnClickListener(this);
         mDownloadClearBtn.setOnClickListener(this);
         mDownloadNotificationShowBtn.setOnClickListener(this);
-        mDownloadTitleLabel.setText("下载文件夹路径:" + DownloadConfig.getInstance().getDownloadDirPath());
         reset();
     }
 
-    private void initData() {
+    @Override
+    protected void initializeData(Bundle savedInstanceState) {
         setTitle("多线程断点下载");
         DownloadEntity e = DownloadDBController.getInstance(getApplicationContext()).findById("weixin680.apk");
         if (e != null) {
@@ -222,10 +224,5 @@ public class MultithreadDownloadActivity extends AppCompatActivity implements Vi
     protected void onPause() {
         super.onPause();
         DownloadManager.getInstance(this).removeObserver(watcher);
-    }
-
-    public void goList(View v) {
-        Intent intent = new Intent(this, MultithreadDownloadListActivity.class);
-        startActivity(intent);
     }
 }

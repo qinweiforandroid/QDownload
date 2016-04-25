@@ -9,23 +9,16 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context=".MultithreadActivity">
+    tools:context=".MultithreadDownloadActivity">
 
-    <TextView
-        android:id="@+id/mDownloadTitleLabel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="@dimen/activity_horizontal_margin"
-        android:textColor="#f0f"
-        android:textSize="16sp" />
-
+近现代
 
     <TextView
         android:id="@+id/mDownloadInfoLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="@dimen/activity_horizontal_margin"
-        android:text="下载过程文件基本信息显示" />
+        android:text="@string/mDownloadInfoLabel" />
 
     <GridLayout
         android:layout_width="match_parent"
@@ -63,12 +56,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="清空本地文件和数据库缓存" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="goList"
-        android:text="多任务断点下载" />
 
     <Button
         android:id="@+id/mDownloadNotificationShowBtn"

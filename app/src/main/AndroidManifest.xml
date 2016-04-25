@@ -13,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name=".HomeActivity"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,8 +21,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
-            android:name=".ListActivity"
+            android:name=".SingleDownloadActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".MultithreadDownloadActivity"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".MultithreadDownloadListActivity"
             android:screenOrientation="portrait" />
 
         <service android:name="com.qw.download.DownloadService" />

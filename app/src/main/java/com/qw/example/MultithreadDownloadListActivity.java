@@ -1,7 +1,6 @@
 package com.qw.example;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +12,7 @@ import android.widget.TextView;
 import com.qw.download.DownloadEntity;
 import com.qw.download.DownloadManager;
 import com.qw.download.DownloadWatcher;
+import com.qw.example.core.BaseActivity;
 
 import java.util.ArrayList;
 
@@ -20,14 +20,14 @@ import java.util.ArrayList;
  * Created by qinwei on 2016/4/15 15:37
  * email:qinwei_it@163.com
  */
-public class MultithreadDownloadListActivity extends AppCompatActivity {
+public class MultithreadDownloadListActivity extends BaseActivity {
     private ListView mDownloadLv;
-    private ArrayList<DownloadEntity> datas;
+    private ArrayList<DownloadEntity> datas= new ArrayList<>();
     private DownloadAdapter adapter;
     private DownloadWatcher watcher = new DownloadWatcher() {
         @Override
         protected void onDataChanged(DownloadEntity e) {
-            if(e.state== DownloadEntity.State.cancelled){
+            if (e.state == DownloadEntity.State.cancelled) {
                 datas.remove(e);
             }
             adapter.notifyDataSetChanged();
@@ -35,19 +35,25 @@ public class MultithreadDownloadListActivity extends AppCompatActivity {
     };
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_list);
-        assignViews();
+    protected void setContentView() {
+        setContentView(R.layout.activity_multithread_list);
     }
 
-
-    private void assignViews() {
+    @Override
+    protected void initializeView() {
         mDownloadLv = (ListView) findViewById(R.id.mDownloadLv);
-        datas = new ArrayList<>();
-        initializeDatas();
         adapter = new DownloadAdapter();
         mDownloadLv.setAdapter(adapter);
+    }
+
+    @Override
+    protected void initializeData(Bundle savedInstanceState) {
+        setTitle("多任务多线程断点下载");
+        datas.add(new DownloadEntity("tengxunVideo.apk", "http://ftp-apk.pconline.com.cn/06ef61ad8dbd3995dfee8b42e338357f/pub/download/201010/TencentVideo_V4.7.1.10021_1161-0406.apk"));
+        datas.add(new DownloadEntity("winXin.apk", "http://gdown.baidu.com/data/wisegame/a2216288661d09b4/weixin_680.apk"));
+        datas.add(new DownloadEntity("tengxunVideo1.apk", "http://ftp-apk.pconline.com.cn/06ef61ad8dbd3995dfee8b42e338357f/pub/download/201010/TencentVideo_V4.7.1.10021_1161-0406.apk"));
+        datas.add(new DownloadEntity("winXin1.apk", "http://gdown.baidu.com/data/wisegame/a2216288661d09b4/weixin_680.apk"));
+        adapter.notifyDataSetChanged();
     }
 
 
@@ -73,7 +79,7 @@ public class MultithreadDownloadListActivity extends AppCompatActivity {
             Holder holder;
             if (convertView == null) {
                 holder = new Holder();
-                convertView = LayoutInflater.from(MultithreadDownloadListActivity.this).inflate(R.layout.activity_list_item, null);
+                convertView = LayoutInflater.from(MultithreadDownloadListActivity.this).inflate(R.layout.layout_multithread_list_item, null);
                 holder.initializeView(convertView);
                 convertView.setTag(holder);
             } else {
@@ -163,10 +169,4 @@ public class MultithreadDownloadListActivity extends AppCompatActivity {
         DownloadManager.getInstance(this).removeObserver(watcher);
     }
 
-    public void initializeDatas() {
-        datas.add(new DownloadEntity("tengxunVideo.apk", "http://ftp-apk.pconline.com.cn/06ef61ad8dbd3995dfee8b42e338357f/pub/download/201010/TencentVideo_V4.7.1.10021_1161-0406.apk"));
-        datas.add(new DownloadEntity("winXin.apk", "http://gdown.baidu.com/data/wisegame/a2216288661d09b4/weixin_680.apk"));
-        datas.add(new DownloadEntity("tengxunVideo1.apk", "http://ftp-apk.pconline.com.cn/06ef61ad8dbd3995dfee8b42e338357f/pub/download/201010/TencentVideo_V4.7.1.10021_1161-0406.apk"));
-        datas.add(new DownloadEntity("winXin1.apk", "http://gdown.baidu.com/data/wisegame/a2216288661d09b4/weixin_680.apk"));
-    }
 }

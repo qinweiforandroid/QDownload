@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">QDownload</string>
+    <string name="mDownloadInfoLabel">下载过程文件基本信息显示</string>
 </resources>

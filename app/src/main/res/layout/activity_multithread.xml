@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".MultithreadActivity">
+
+    <TextView
+        android:id="@+id/mDownloadTitleLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/activity_horizontal_margin"
+        android:textColor="#f0f"
+        android:textSize="16sp" />
+
+
+    <TextView
+        android:id="@+id/mDownloadInfoLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/activity_horizontal_margin"
+        android:text="下载过程文件基本信息显示" />
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="2"
+        android:rowCount="2">
+
+        <Button
+            android:id="@+id/mDownloadAddBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="开始下载" />
+
+        <Button
+            android:id="@+id/mDownloadStopBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="暂停下载" />
+
+        <Button
+            android:id="@+id/mDownloadResumeBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="恢复下载" />
+
+        <Button
+            android:id="@+id/mDownloadCancelBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="取消下载" />
+    </GridLayout>
+
+    <Button
+        android:id="@+id/mDownloadClearBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="清空本地文件和数据库缓存" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="goList"
+        android:text="多任务断点下载" />
+
+    <Button
+        android:id="@+id/mDownloadNotificationShowBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="显示在通知栏" />
+
+</LinearLayout>

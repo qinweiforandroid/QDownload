@@ -20,14 +20,16 @@ import java.util.ArrayList;
  * Created by qinwei on 2016/4/15 15:37
  * email:qinwei_it@163.com
  */
-public class ListActivity extends AppCompatActivity {
+public class MultithreadDownloadListActivity extends AppCompatActivity {
     private ListView mDownloadLv;
     private ArrayList<DownloadEntity> datas;
     private DownloadAdapter adapter;
     private DownloadWatcher watcher = new DownloadWatcher() {
         @Override
         protected void onDataChanged(DownloadEntity e) {
-//            Log.e("ListActivity", e.toString());
+            if(e.state== DownloadEntity.State.cancelled){
+                datas.remove(e);
+            }
             adapter.notifyDataSetChanged();
         }
     };
@@ -71,7 +73,7 @@ public class ListActivity extends AppCompatActivity {
             Holder holder;
             if (convertView == null) {
                 holder = new Holder();
-                convertView = LayoutInflater.from(ListActivity.this).inflate(R.layout.activity_list_item, null);
+                convertView = LayoutInflater.from(MultithreadDownloadListActivity.this).inflate(R.layout.activity_list_item, null);
                 holder.initializeView(convertView);
                 convertView.setTag(holder);
             } else {

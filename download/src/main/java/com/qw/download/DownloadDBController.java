@@ -49,7 +49,7 @@ public class DownloadDBController {
         value.put("ranges", gson.toJson(e.ranges));
         value.put("isSupportRange", e.isSupportRange ? 0 : 1);
         long number = getDB().insert("DB_DOWNLOAD", null, value);
-        DLog.d(TAG, "add " + e.toString() + " " + number);
+//        DLog.d(TAG, "add " + e.toString() + " " + number);
         return number > 0;
     }
 
@@ -63,7 +63,7 @@ public class DownloadDBController {
         value.put("ranges", gson.toJson(e.ranges));
         value.put("isSupportRange", e.isSupportRange ? 0 : 1);
         long number = getDB().update("DB_DOWNLOAD", value, " id=?", new String[]{e.id});
-        DLog.d(TAG, "update " + e.toString() + " " + number);
+//        DLog.d(TAG, "update " + e.toString() + " " + number);
         return number > 0;
     }
 
@@ -127,7 +127,7 @@ public class DownloadDBController {
 
     public boolean delete(DownloadEntity e) {
         long number = getDB().delete("DB_DOWNLOAD", "id=?", new String[]{e.id});
-        DLog.d(TAG, "delete " + e.toString() + " " + number);
+//        DLog.d(TAG, "delete " + e.toString() + " " + number);
         return number > 0;
     }
 
@@ -137,13 +137,13 @@ public class DownloadDBController {
             ids[i] = es.get(i).id;
         }
         long number = getDB().delete("DB_DOWNLOAD", "id=?", ids);
-        DLog.d(TAG, " delete " + number);
+//        DLog.d(TAG, " delete " + number);
         return number > 0;
     }
 
     public boolean deleteAll() {
         long number = getDB().delete("DB_DOWNLOAD", null, null);
-        DLog.d(TAG, "deleteAll " + number);
+//        DLog.d(TAG, "deleteAll " + number);
         return number > 0;
     }
 }

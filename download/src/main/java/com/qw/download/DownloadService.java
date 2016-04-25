@@ -164,11 +164,11 @@ public class DownloadService extends Service {
         DLog.d(TAG, entity.id + " pause");
         DownloadTask task = mDownloadingTasks.get(entity.id);
         if (task != null) {
-            task.stop();
+            task.pause();
         } else {
             entity.state = DownloadEntity.State.paused;
             mDownloadWaitQueues.remove(entity);
-            DLog.d(TAG, entity.id + " stop mDownloadWaitQueues remove |size:" + mDownloadWaitQueues.size());
+            DLog.d(TAG, entity.id + " pause mDownloadWaitQueues remove |size:" + mDownloadWaitQueues.size());
             DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
         }
     }
@@ -184,6 +184,8 @@ public class DownloadService extends Service {
             DLog.d(TAG, entity.id + " cancel mDownloadWaitQueues remove |size:" + mDownloadWaitQueues.size());
             DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
         }
+//        delete db data
+        DownloadDBController.getInstance(getApplicationContext()).delete(entity);
     }
 
     private void stopAll(DownloadEntity entity) {

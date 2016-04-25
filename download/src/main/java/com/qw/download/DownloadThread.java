@@ -59,9 +59,10 @@ public class DownloadThread implements Runnable {
     }
 
     public void error() {
+        listener = null;
         state = DownloadEntity.State.error;
         isRunning = false;
-        DLog.d(TAG, "error interrupt threadIndex " + threadIndex);
+        DLog.d(TAG, entity.id + " error interrupt threadIndex " + threadIndex);
     }
 
     private boolean isPause() {
@@ -82,14 +83,16 @@ public class DownloadThread implements Runnable {
         void onDownloadCompleted(int index);
 
         void onDownloadError(int index, String msg);
+
         /**
-         * @deprecated
          * @param index
+         * @deprecated
          */
         void onDownloadPaused(int index);
+
         /**
-         * @deprecated
          * @param index
+         * @deprecated
          */
         void onDownloadCancelled(int index);
     }
@@ -169,8 +172,11 @@ public class DownloadThread implements Runnable {
                 if (listener != null)
                     listener.onDownloadCancelled(threadIndex);
             } else {
-                if (listener != null)
-                    listener.onDownloadError(threadIndex, e.getMessage());
+                synchronized (DownloadThread.class) {
+                    if (listener != null) {
+                        listener.onDownloadError(threadIndex, e.getMessage());
+                    }
+                }
             }
         } finally {
             isRunning = false;

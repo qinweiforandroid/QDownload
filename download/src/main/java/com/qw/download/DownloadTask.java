@@ -49,25 +49,25 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
         notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_CONNECTING);
     }
 
-    public void stop() {
+    public void pause() {
         if (connectThread != null && connectThread.isRunning()) {
             connectThread.cancel(DownloadEntity.State.paused);
             connectThreadFuture.cancel(true);
         } else {
+            if (!entity.isSupportRange) {//单线程下载不支持暂停操作
+                cancel();
+                return;
+            }
             for (int i = 0; i < threads.length; i++) {
-                if (entity.isSupportRange) {
-                    if (threads[i] != null && threads[i].isRunning()) {
-                        threads[i].pause();
-                        futures[i].cancel(true);
-                    }
-                } else {
-                    threads[i].cancel();
+                if (threads[i] != null && threads[i].isRunning()) {
+                    threads[i].pause();
                     futures[i].cancel(true);
                 }
             }
         }
+
         entity.state = DownloadEntity.State.paused;
-        DLog.d(TAG, entity.id + " onDownloadPaused notifyUpdate download state: " + entity.state.name());
+        DLog.d(TAG, entity.id + " pause notifyUpdate download state: " + entity.state.name());
         notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_PAUSED);
     }
 
@@ -86,7 +86,10 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
 
         File file = new File(DownloadFileUtil.getDownloadPath(entity.id));
         if (file.exists()) {
-            file.delete();
+            boolean delete = file.delete();
+            if (delete) {
+                DLog.d(TAG, entity.id + " delete success ");
+            }
         }
         entity.state = DownloadEntity.State.cancelled;
         entity.reset();
@@ -110,18 +113,17 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
         threads = new DownloadThread[DownloadConfig.MAX_DOWNLOAD_THREAD_SIZE];
         futures = new Future<?>[DownloadConfig.MAX_DOWNLOAD_THREAD_SIZE];
         states = new DownloadEntity.State[DownloadConfig.MAX_DOWNLOAD_THREAD_SIZE];
-        int start = 0;
-        int end = 0;
+        int start;
+        int end;
         if (entity.ranges == null) {
             DLog.d(TAG, entity.id + " startMultithreadingDownload init ranges");
             entity.ranges = new HashMap<>();
             for (int i = 0; i < DownloadConfig.MAX_DOWNLOAD_THREAD_SIZE; i++) {
-                entity.ranges.put(i, 0l);
+                entity.ranges.put(i, 0L);
             }
         }
         int block = (int) (entity.contentLength / threads.length);
         for (int i = 0; i < threads.length; i++) {
-            DLog.d(TAG, entity.ranges + "");
             start = (int) (i * block + entity.ranges.get(i));
             if (i != threads.length - 1) {
                 end = (i + 1) * block - 1;
@@ -168,7 +170,7 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
         DLog.d(TAG, entity.id + " onConnectError " + state.name() + " msg:" + msg);
 
         if (currentRetryIndex < DownloadConfig.MAX_RETRY_COUNT) {
-            DLog.d(TAG, "----------" + entity.id + " onConnectError doConnectDownloadFile retry " + currentRetryIndex + "----------");
+            DLog.d(TAG, entity.id + " onConnectError doConnectDownloadFile retry " + currentRetryIndex);
             currentRetryIndex++;
             doConnectDownloadFile();
         } else {
@@ -216,8 +218,8 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
     public synchronized void onDownloadCompleted(int index) {
         DLog.d(TAG, entity.id + " onDownloadCompleted thread index " + index);
         states[index] = DownloadEntity.State.done;
-        for (int i = 0; i < states.length; i++) {
-            if (states[i] != DownloadEntity.State.done) {
+        for (DownloadEntity.State state : states) {
+            if (state != DownloadEntity.State.done) {
                 return;
             }
         }
@@ -228,24 +230,23 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
 
     @Override
     public synchronized void onDownloadError(int index, String msg) {
+//        FIXME 有一条线程出错 停止其它下载线程
         DLog.d(TAG, entity.id + " onDownloadError thread index " + index + " msg:" + msg);
         states[index] = DownloadEntity.State.error;
         for (int i = 0; i < states.length; i++) {
             if (states[i] == DownloadEntity.State.ing) {
                 threads[i].error();
-                return;
             }
         }
-
         //只有支持断点续传 才能进行重试恢复下载操作
         if (currentRetryIndex < DownloadConfig.MAX_RETRY_COUNT && entity.isSupportRange) {
-            DLog.d(TAG, "----------" + entity.id + " onDownloadError doConnectDownloadFile retry " + currentRetryIndex + "----------");
+            DLog.d(TAG, entity.id + " onDownloadError doConnectDownloadFile retry " + currentRetryIndex);
             currentRetryIndex++;
             startDownload();
         } else {
-            if(entity.isSupportRange){
-                File file=new File(DownloadFileUtil.getDownloadPath(entity.id));
-                if(file.exists()){
+            if (!entity.isSupportRange) {//不支持断点下载 要把缓存文件删掉
+                File file = new File(DownloadFileUtil.getDownloadPath(entity.id));
+                if (file.exists()) {
                     file.delete();
                 }
                 entity.reset();
@@ -254,16 +255,14 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
             DLog.d(TAG, entity.id + " onDownloadError notifyUpdate download state: " + entity.state.name());
             notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ERROR);
         }
-
-
     }
 
     @Override
     public synchronized void onDownloadPaused(int index) {
         DLog.d(TAG, entity.id + " onDownloadPaused thread index " + index);
         states[index] = DownloadEntity.State.paused;
-        for (int i = 0; i < states.length; i++) {
-            if (states[i] == DownloadEntity.State.ing) {
+        for (DownloadEntity.State state : states) {
+            if (state == DownloadEntity.State.ing) {
                 return;
             }
         }
@@ -276,8 +275,8 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
     public synchronized void onDownloadCancelled(int index) {
         DLog.d(TAG, entity.id + " onDownloadCancelled thread index " + index);
         states[index] = DownloadEntity.State.cancelled;
-        for (int i = 0; i < states.length; i++) {
-            if (states[i] == DownloadEntity.State.ing) {
+        for (DownloadEntity.State state : states) {
+            if (state == DownloadEntity.State.ing) {
                 return;
             }
         }

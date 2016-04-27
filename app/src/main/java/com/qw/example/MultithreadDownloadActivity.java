@@ -37,51 +37,56 @@ public class MultithreadDownloadActivity extends BaseActivity implements View.On
     private DownloadWatcher watcher = new DownloadWatcher() {
         @Override
         protected void onDataChanged(DownloadEntity e) {
-            if (!e.equals(entity)) return;
-            entity = e;
-            switch (e.state) {
-                case cancelled:
-                    break;
-                case paused:
-                    if (mNotificationManager != null) {
-                        mBuilder.setContentText("暂停 " + e.currentLength + "/" + e.contentLength);
-                        mBuilder.setProgress(100, (int) (e.currentLength * 100.0 / e.contentLength), false);
-                        mNotificationManager.notify(0, mBuilder.build());
-                    }
-                    break;
-                case resume:
-                    break;
-                case ing:
-                    if (mNotificationManager != null) {
-                        mBuilder.setContentText(e.currentLength + "/" + e.contentLength);
-                        mBuilder.setProgress(100, (int) (e.currentLength * 100.0 / e.contentLength), false);
-                        mNotificationManager.notify(0, mBuilder.build());
-                    }
-                    break;
-                case done:
-                    if (mNotificationManager != null) {
-                        mBuilder.setContentText("下载完成，点击打开 ");
-                        mBuilder.setProgress(0, 0, false);
-                        mNotificationManager.notify(0, mBuilder.build());
-                    }
-                    break;
-                case connect:
-                    if (mNotificationManager != null) {
-                        mBuilder.setContentText("连接中");
-                        mNotificationManager.notify(0, mBuilder.build());
-                    }
-                case error:
-                    if (mNotificationManager != null) {
-                        mBuilder.setContentText("下载失败，点击重试");
-                        mNotificationManager.notify(0, mBuilder.build());
-                    }
-                    mDownloadStopBtn.setEnabled(false);
-                    mDownloadResumeBtn.setEnabled(true);
-                    mDownloadCancelBtn.setEnabled(false);
-                    break;
+            if (entity != null) {
+
+
+                if (!e.equals(entity)) return;
+                entity = e;
+                switch (e.state) {
+                    case cancelled:
+                        break;
+                    case paused:
+                        if (mNotificationManager != null) {
+                            mBuilder.setContentText("暂停 " + e.currentLength + "/" + e.contentLength);
+                            mBuilder.setProgress(100, (int) (e.currentLength * 100.0 / e.contentLength), false);
+                            mNotificationManager.notify(0, mBuilder.build());
+                        }
+                        break;
+                    case resume:
+                        break;
+                    case ing:
+                        if (mNotificationManager != null) {
+                            mBuilder.setContentText(e.currentLength + "/" + e.contentLength);
+                            mBuilder.setProgress(100, (int) (e.currentLength * 100.0 / e.contentLength), false);
+                            mNotificationManager.notify(0, mBuilder.build());
+                        }
+                        break;
+                    case done:
+                        if (mNotificationManager != null) {
+                            mBuilder.setContentText("下载完成，点击打开 ");
+                            mBuilder.setProgress(0, 0, false);
+                            mNotificationManager.notify(0, mBuilder.build());
+                        }
+                        mDownloadAddBtn.setEnabled(false);
+                        mDownloadStopBtn.setEnabled(false);
+                        mDownloadResumeBtn.setEnabled(false);
+                        mDownloadCancelBtn.setEnabled(false);
+                        break;
+                    case connect:
+                        if (mNotificationManager != null) {
+                            mBuilder.setContentText("连接中");
+                            mNotificationManager.notify(0, mBuilder.build());
+                        }
+                    case error:
+                        if (mNotificationManager != null) {
+                            mBuilder.setContentText("下载失败，点击重试");
+                            mNotificationManager.notify(0, mBuilder.build());
+                        }
+                        break;
+                }
+                mDownloadInfoLabel.setText(e.toString());
+                Log.e("Multithread", e.toString());
             }
-            mDownloadInfoLabel.setText(e.toString());
-            Log.e("Multithread", e.toString());
         }
     };
 
@@ -116,6 +121,16 @@ public class MultithreadDownloadActivity extends BaseActivity implements View.On
         if (e != null) {
             entity = e;
             mDownloadInfoLabel.setText(entity.toString());
+            if (entity.state == DownloadEntity.State.ing) {
+                mDownloadAddBtn.setEnabled(false);
+                mDownloadStopBtn.setEnabled(true);
+                mDownloadCancelBtn.setEnabled(true);
+            } else if (entity.state == DownloadEntity.State.done) {
+                mDownloadAddBtn.setEnabled(false);
+                mDownloadStopBtn.setEnabled(false);
+                mDownloadResumeBtn.setEnabled(false);
+                mDownloadCancelBtn.setEnabled(false);
+            }
         }
     }
 

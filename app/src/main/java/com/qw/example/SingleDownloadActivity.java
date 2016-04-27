@@ -23,12 +23,13 @@ public class SingleDownloadActivity extends BaseActivity implements View.OnClick
     private DownloadWatcher watcher = new DownloadWatcher() {
         @Override
         protected void onDataChanged(DownloadEntity e) {
-            if(!e.equals(entity))return;
-            mSingleDownloadInfoLabel.setText(e.toString());
-            Log.e("Multithread", e.toString());
+            if (entity != null) {
+                if (!e.equals(entity)) return;
+                mSingleDownloadInfoLabel.setText(e.toString());
+                Log.e("Multithread", e.toString());
+            }
         }
     };
-
 
     @Override
     protected void setContentView() {
@@ -56,8 +57,8 @@ public class SingleDownloadActivity extends BaseActivity implements View.OnClick
             entity = new DownloadEntity();
             entity.id = "weixin680_for_single_download.apk";
             entity.url = "http://gdown.baidu.com/data/wisegame/a2216288661d09b4/weixin_680.apk";
-            entity.isSupportRange=false;
-            entity.contentLength=33453820;
+            entity.isSupportRange = false;
+            entity.contentLength = 33453820;
         }
         switch (v.getId()) {
             case R.id.mSingleDownloadAddBtn:

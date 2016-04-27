@@ -88,7 +88,7 @@ public class DownloadService extends Service {
         DownloadChanger.getInstance(getApplicationContext()).init(es);
         for (int i = 0; i < es.size(); i++) {
             DownloadEntity e = es.get(i);
-            if(e.state== DownloadEntity.State.ing||e.state== DownloadEntity.State.wait){
+            if (e.state == DownloadEntity.State.ing || e.state == DownloadEntity.State.wait) {
                 add(e);
             }
         }
@@ -108,16 +108,20 @@ public class DownloadService extends Service {
     private void doAction(int action, DownloadEntity entity) {
         switch (action) {
             case DownloadConstants.KEY_DOWNLOAD_ACTION_ADD:
-                add(entity);
+                if (entity.state == DownloadEntity.State.idle || entity.state == DownloadEntity.State.cancelled || entity.state == DownloadEntity.State.paused)
+                    add(entity);
                 break;
             case DownloadConstants.KEY_DOWNLOAD_ACTION_PAUSE:
-                stop(entity);
+                if (entity.state == DownloadEntity.State.ing)
+                    stop(entity);
                 break;
             case DownloadConstants.KEY_DOWNLOAD_ACTION_RESUME:
-                resume(entity);
+                if (entity.state == DownloadEntity.State.paused || entity.state == DownloadEntity.State.cancelled)
+                    resume(entity);
                 break;
             case DownloadConstants.KEY_DOWNLOAD_ACTION_CANCEL:
-                cancel(entity);
+                if (entity.state == DownloadEntity.State.ing)
+                    cancel(entity);
                 break;
             case DownloadConstants.KEY_DOWNLOAD_ACTION_STOP_ALL:
                 stopAll(entity);
@@ -199,6 +203,6 @@ public class DownloadService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        DLog.d(TAG,"onDestroy");
+        DLog.d(TAG, "onDestroy");
     }
 }

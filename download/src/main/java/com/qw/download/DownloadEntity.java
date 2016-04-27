@@ -16,7 +16,10 @@ public class DownloadEntity implements Serializable {
     public State state;
     public HashMap<Integer, Long> ranges;
 
-    public DownloadEntity(){}
+    public DownloadEntity() {
+        state = State.idle;
+    }
+
     public DownloadEntity(String id, String url) {
         this.id = id;
         this.url = url;
@@ -44,6 +47,6 @@ public class DownloadEntity implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        return o.hashCode()==this.hashCode();
+        return o.hashCode() == this.hashCode();
     }
 }

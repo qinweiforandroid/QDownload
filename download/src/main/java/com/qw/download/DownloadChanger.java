@@ -50,4 +50,8 @@ public class DownloadChanger extends Observable {
             addOperationTasks(es.get(i));
         }
     }
+
+    public void deleteOperationTasks(DownloadEntity entity) {
+        mOperationTasks.remove(entity.id);
+    }
 }

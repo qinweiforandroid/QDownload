@@ -1,11 +1,16 @@
 # what QDownload
 a  MultithreadDownload libs，support simple api for dev 
 # how to use
+# Gradle
 
-DownloadManager.getInstance(this).addDownload(entity);//添加一个下载任务
-DownloadManager.getInstance(this).pauseDownload(entity);//暂停一个下载任务
-DownloadManager.getInstance(this).resumeDownload(entity);//恢复一个下载任务
-DownloadManager.getInstance(this).cancelDownload(entity);//取消一个下载任务
+    compile 'com.qw.download:download:1.0'
+
+# API
+
+    DownloadManager.getInstance(this).addDownload(entity);//添加一个下载任务
+    DownloadManager.getInstance(this).pauseDownload(entity);//暂停一个下载任务
+    DownloadManager.getInstance(this).resumeDownload(entity);//恢复一个下载任务
+    DownloadManager.getInstance(this).cancelDownload(entity);//取消一个下载任务
 
 在你需要观测的地方加上
 

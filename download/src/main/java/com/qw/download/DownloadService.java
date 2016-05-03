@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,7 +65,7 @@ public class DownloadService extends Service {
         }
     }
 
-    @Nullable
+
     @Override
     public IBinder onBind(Intent intent) {
         return null;

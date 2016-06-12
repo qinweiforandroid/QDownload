@@ -240,7 +240,7 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
         }
         //只有支持断点续传 才能进行重试恢复下载操作
         if (currentRetryIndex < DownloadConfig.MAX_RETRY_COUNT && entity.isSupportRange) {
-            DLog.d(TAG, entity.id + " onDownloadError doConnectDownloadFile retry " + currentRetryIndex);
+            DLog.d(TAG, entity.id + " onDownloadError startDownload retry " + currentRetryIndex);
             currentRetryIndex++;
             startDownload();
         } else {

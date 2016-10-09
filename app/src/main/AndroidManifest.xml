@@ -23,13 +23,6 @@
         </activity>
 
         <activity
-            android:name=".SingleDownloadActivity"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".MultithreadDownloadActivity"
-            android:screenOrientation="portrait" />
-
-        <activity
             android:name=".MultithreadDownloadListActivity"
             android:screenOrientation="portrait" />
 

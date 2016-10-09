@@ -23,13 +23,6 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="goMultithread"
-        android:text="多线程断点下载" />
-
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:onClick="goMultithreadList"
         android:text="多任务多线程断点下载" />
 </LinearLayout>

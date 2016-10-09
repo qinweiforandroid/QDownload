@@ -7,8 +7,10 @@ import android.util.Log;
  * email:qinwei_it@163.com
  */
 public class DLog {
-    public static void d(String tag, String msg) {
+    public static final String TAG = "QDownload";
+
+    public static void d(String msg) {
         if (DownloadConfig.getInstance().isDevelop)
-            Log.e(tag, msg);
+            Log.e(TAG, "--> " + msg);
     }
 }

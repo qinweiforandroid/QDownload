@@ -39,10 +39,6 @@ public class HomeActivity extends BaseActivity {
         startActivity(intent);
     }
 
-    public void goMultithread(View v) {
-        Intent intent = new Intent(this, MultithreadDownloadActivity.class);
-        startActivity(intent);
-    }
 
     public void goMultithreadList(View v) {
         Intent intent = new Intent(this, MultithreadDownloadListActivity.class);

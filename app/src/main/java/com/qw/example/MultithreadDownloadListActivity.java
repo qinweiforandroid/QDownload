@@ -22,7 +22,7 @@ import java.util.ArrayList;
  */
 public class MultithreadDownloadListActivity extends BaseActivity {
     private ListView mDownloadLv;
-    private ArrayList<DownloadEntity> datas= new ArrayList<>();
+    private ArrayList<DownloadEntity> datas = new ArrayList<>();
     private DownloadAdapter adapter;
     private DownloadWatcher watcher = new DownloadWatcher() {
         @Override
@@ -49,10 +49,10 @@ public class MultithreadDownloadListActivity extends BaseActivity {
     @Override
     protected void initializeData(Bundle savedInstanceState) {
         setTitle("多任务多线程断点下载");
-        datas.add(new DownloadEntity("tengxunVideo.apk", "http://ftp-apk.pconline.com.cn/06ef61ad8dbd3995dfee8b42e338357f/pub/download/201010/TencentVideo_V4.7.1.10021_1161-0406.apk"));
-        datas.add(new DownloadEntity("winXin.apk", "http://gdown.baidu.com/data/wisegame/a2216288661d09b4/weixin_680.apk"));
-        datas.add(new DownloadEntity("tengxunVideo1.apk", "http://ftp-apk.pconline.com.cn/06ef61ad8dbd3995dfee8b42e338357f/pub/download/201010/TencentVideo_V4.7.1.10021_1161-0406.apk"));
-        datas.add(new DownloadEntity("winXin1.apk", "http://gdown.baidu.com/data/wisegame/a2216288661d09b4/weixin_680.apk"));
+        datas.add(new DownloadEntity("weixin.apk", "http://gdown.baidu.com/data/wisegame/1ca4848c314c1289/WeChat_880.apk"));
+        datas.add(new DownloadEntity("qq.apk", "http://gdown.baidu.com/data/wisegame/bb10246b648a16a6/QQ_410.apk"));
+        datas.add(new DownloadEntity("baiduzhushou.apk", "http://gdown.baidu.com/data/wisegame/0d89baa0cf1f8baa/baidushoujizhushou_16792112.apk"));
+        datas.add(new DownloadEntity("tiantiandongting.apk", "http://gdown.baidu.com/data/wisegame/fb900c87dfc08fb6/alixingqiu_9020100.apk"));
         adapter.notifyDataSetChanged();
     }
 

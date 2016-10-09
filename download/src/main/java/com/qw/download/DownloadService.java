@@ -53,18 +53,16 @@ public class DownloadService extends Service {
 
     public void executeNext(DownloadEntity e) {
         DownloadTask task = mDownloadingTasks.remove(e.id);
-        DLog.d(TAG, "executeNext mDownloadingTasks.remove " + (task != null));
         if (task != null) {
             DownloadEntity entity = mDownloadWaitQueues.poll();
             if (entity != null) {
-                DLog.d(TAG, entity.id + " executeNext mDownloadWaitQueues.poll() " + (task != null));
+                DLog.d("Waiting Queues  poll execute next download task name is " + e.url);
                 add(entity);
             } else {
-                DLog.d(TAG, "executeNext no task can run ");
+                DLog.d("All download task execute completed ");
             }
         }
     }
-
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -78,7 +76,7 @@ public class DownloadService extends Service {
     }
 
     private void initDownload() {
-        DLog.d(TAG, "initDownload (Executors、mDownloadWaitQueues、mDownloadingTasks、DB、DownloadChanger)");
+        DLog.d("initDownload (Executors、mDownloadWaitQueues、mDownloadingTasks、DB、DownloadChanger)");
         mExecutors = Executors.newCachedThreadPool();
         mDownloadWaitQueues = new LinkedBlockingQueue<>();
         mDownloadingTasks = new HashMap<>();
@@ -110,7 +108,7 @@ public class DownloadService extends Service {
                 add(entity);
                 break;
             case DownloadConstants.KEY_DOWNLOAD_ACTION_PAUSE:
-                stop(entity);
+                pause(entity);
                 break;
             case DownloadConstants.KEY_DOWNLOAD_ACTION_RESUME:
                 resume(entity);
@@ -119,10 +117,10 @@ public class DownloadService extends Service {
                 cancel(entity);
                 break;
             case DownloadConstants.KEY_DOWNLOAD_ACTION_STOP_ALL:
-                stopAll(entity);
+                stopAll();
                 break;
             case DownloadConstants.KEY_DOWNLOAD_ACTION_RECOVER_ALL:
-                recoverAll(entity);
+                recoverAll();
                 break;
             default:
                 break;
@@ -131,7 +129,6 @@ public class DownloadService extends Service {
 
     private void add(DownloadEntity entity) {
         DownloadChanger.getInstance(getApplicationContext()).addOperationTasks(entity);
-        DLog.d(TAG, entity.id + " add mDownloadingTasks size:" + mDownloadingTasks.size());
         if (mDownloadingTasks.size() >= DownloadConfig.MAX_DOWNLOAD_TASK_SIZE) {
             addQueues(entity);
         } else {
@@ -140,64 +137,65 @@ public class DownloadService extends Service {
     }
 
     private void addQueues(DownloadEntity entity) {
+        DLog.d("start download add queues task id=" + entity.id);
         entity.state = DownloadEntity.State.wait;
         mDownloadWaitQueues.offer(entity);
         DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
-        DLog.d(TAG, entity.id + " addQueues 添加到等待队列mDownloadWaitQueues size:" + mDownloadWaitQueues.size());
+        DLog.d("add task to queues ,then wait queues size is " + mDownloadWaitQueues.size());
     }
 
     private void start(DownloadEntity entity) {
-        DLog.d(TAG, entity.id + " start");
+        DLog.d("add download task id=" + entity.id);
         DownloadTask task = new DownloadTask(entity, mExecutors, handler);
         mDownloadingTasks.put(entity.id, task);
-        DLog.d(TAG, entity.id + " start 添加到下载任务中mDownloadingTasks size:" + mDownloadingTasks.size());
+        DLog.d("the task is added then mDownloadingTasks size is" + mDownloadingTasks.size());
         task.start();
     }
 
     private void resume(DownloadEntity entity) {
-        DLog.d(TAG, entity.id + " resume");
+        DLog.d("resume download task id=" + entity.id);
         add(entity);
     }
 
-    private void stop(DownloadEntity entity) {
-        DLog.d(TAG, entity.id + " pause");
+    private void pause(DownloadEntity entity) {
+        DLog.d("pause download task id=" + entity.id);
         DownloadTask task = mDownloadingTasks.get(entity.id);
-        if (task != null) {
+        if (task != null) {//正在进行的task 暂停操作
             task.pause();
-        } else {
+        } else {//下载队列的task 暂停操作
             entity.state = DownloadEntity.State.paused;
             mDownloadWaitQueues.remove(entity);
-            DLog.d(TAG, entity.id + " pause mDownloadWaitQueues remove |size:" + mDownloadWaitQueues.size());
+            DLog.d("waiting queues  poll then queues size is" + mDownloadWaitQueues.size());
             DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
         }
     }
 
     private void cancel(DownloadEntity entity) {
-        DLog.d(TAG, entity.id + " cancel");
+        DLog.d("cancel download task id=" + entity.id);
         DownloadTask task = mDownloadingTasks.get(entity.id);
         if (task != null) {
             task.cancel();
         } else {
             entity.state = DownloadEntity.State.cancelled;
             mDownloadWaitQueues.remove(entity);
-            DLog.d(TAG, entity.id + " cancel mDownloadWaitQueues remove |size:" + mDownloadWaitQueues.size());
+            DLog.d("waiting queues  poll then queues size is" + mDownloadWaitQueues.size());
             DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
         }
 //        delete db data
         DownloadDBController.getInstance(getApplicationContext()).delete(entity);
     }
 
-    private void stopAll(DownloadEntity entity) {
-        DLog.d(TAG, entity.id + " stopAll");
+    private void stopAll() {
+        DLog.d("stopAll");
     }
 
-    private void recoverAll(DownloadEntity entity) {
-        DLog.d(TAG, entity.id + " recoverAll");
+    private void recoverAll() {
+        DLog.d("recoverAll");
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        DLog.d(TAG, "onDestroy");
+        DLog.d("DownloadService onDestroy");
     }
 }

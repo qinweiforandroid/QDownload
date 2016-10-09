@@ -30,14 +30,14 @@ public class DownloadThread implements Runnable {
         this.threadIndex = threadIndex;
         this.start = start;
         this.end = end;
-        DLog.d(TAG, "isSingleThread " + isSingleThread + " threadIndex " + threadIndex + " start-end:" + start + "_" + end);
+        DLog.d("isSingleThread " + isSingleThread + " threadIndex " + threadIndex + " start-end:" + start + "_" + end);
     }
 
     public DownloadThread(DownloadEntity entity) {
         this.entity = entity;
         threadIndex = 0;
         isSingleThread = true;
-        DLog.d(TAG, "isSingleThread " + isSingleThread + " threadIndex " + threadIndex);
+        DLog.d("isSingleThread " + isSingleThread + " threadIndex " + threadIndex);
     }
 
     public boolean isRunning() {
@@ -48,21 +48,21 @@ public class DownloadThread implements Runnable {
         listener = null;
         state = DownloadEntity.State.paused;
         isRunning = false;
-        DLog.d(TAG, "pause interrupt threadIndex " + threadIndex);
+        DLog.d("pause interrupt threadIndex " + threadIndex);
     }
 
     public void cancel() {
         listener = null;
         state = DownloadEntity.State.cancelled;
         isRunning = false;
-        DLog.d(TAG, "cancel interrupt threadIndex " + threadIndex);
+        DLog.d("cancel interrupt threadIndex " + threadIndex);
     }
 
     public void error() {
         listener = null;
         state = DownloadEntity.State.error;
         isRunning = false;
-        DLog.d(TAG, entity.id + " error interrupt threadIndex " + threadIndex);
+        DLog.d("error interrupt threadIndex " + threadIndex + " id=" + entity.id);
     }
 
     private boolean isPause() {

@@ -1,5 +1,7 @@
 package com.qw.example;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,10 +12,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.qw.download.DownloadEntity;
+import com.qw.download.DownloadFileUtil;
 import com.qw.download.DownloadManager;
 import com.qw.download.DownloadWatcher;
 import com.qw.example.core.BaseActivity;
 
+import java.io.File;
 import java.util.ArrayList;
 
 /**
@@ -51,7 +55,7 @@ public class MultithreadDownloadListActivity extends BaseActivity {
         setTitle("多任务多线程断点下载");
         datas.add(new DownloadEntity("weixin.apk", "http://gdown.baidu.com/data/wisegame/1ca4848c314c1289/WeChat_880.apk"));
         datas.add(new DownloadEntity("qq.apk", "http://gdown.baidu.com/data/wisegame/bb10246b648a16a6/QQ_410.apk"));
-        datas.add(new DownloadEntity("baiduzhushou.apk", "http://gdown.baidu.com/data/wisegame/0d89baa0cf1f8baa/baidushoujizhushou_16792112.apk"));
+        datas.add(new DownloadEntity("一皆通.apk", "http://beta.ecpay.1toall.net/downs/yjt_v1.0_20161017_02.apk"));
         datas.add(new DownloadEntity("tiantiandongting.apk", "http://gdown.baidu.com/data/wisegame/fb900c87dfc08fb6/alixingqiu_9020100.apk"));
         adapter.notifyDataSetChanged();
     }
@@ -151,10 +155,25 @@ public class MultithreadDownloadListActivity extends BaseActivity {
                 case idle:
                     DownloadManager.getInstance(getApplicationContext()).addDownload(e);
                     break;
+                case done:
+                    String path = DownloadFileUtil.getDownloadPath(e.id);
+                    File apkfile = new File(path);
+                    if (!apkfile.exists()) {
+                        return;
+                    }
+                    // 通过Intent安装APK文件
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    i.setDataAndType(Uri.parse("file://" + apkfile.toString()),
+                            "application/vnd.android.package-archive");
+                    startActivity(i);
+                    android.os.Process.killProcess(android.os.Process.myPid());
+                    break;
                 default:
                     break;
             }
         }
+
     }
 
     @Override

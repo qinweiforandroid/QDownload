@@ -2,12 +2,14 @@ package com.qw.example;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.view.View;
 import android.widget.TextView;
 
 import com.qw.download.DownloadConfig;
 import com.qw.download.DownloadManager;
 import com.qw.example.core.BaseActivity;
+import com.qw.example.utils.PermissionHelper;
 
 /**
  * Created by qinwei on 2016/4/22 10:51
@@ -15,6 +17,12 @@ import com.qw.example.core.BaseActivity;
  */
 public class HomeActivity extends BaseActivity {
     private TextView mHomeDownloadDirPathLabel;
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        PermissionHelper.requestPermission(this, PermissionHelper.Permission.STORAGE, PermissionHelper.ASK_WRITE_EXTERNAL_STORAGE);
+    }
 
     @Override
     protected void setContentView() {

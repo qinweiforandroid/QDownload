@@ -25,6 +25,9 @@
         <activity
             android:name=".MultithreadDownloadListActivity"
             android:screenOrientation="portrait" />
+        <activity
+            android:name=".SingleDownloadActivity"
+            android:screenOrientation="portrait" />
 
         <service android:name="com.qw.download.DownloadService" />
     </application>

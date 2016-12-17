@@ -39,7 +39,7 @@ public class DownloadConfig {
      * @return
      */
     public DownloadConfig setDownloadDirPath(String downloadDirPath) {
-        this.downloadDirPath =downloadDirPath;
+        this.downloadDirPath =DownloadFileUtil.getDownloadDir(downloadDirPath);
         return this;
     }
 

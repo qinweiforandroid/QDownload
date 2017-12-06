@@ -14,7 +14,10 @@ import java.util.Observable;
 public class DownloadChanger extends Observable {
     private static DownloadChanger mInstance;
     private Context context;
-    private LinkedHashMap<String, DownloadEntity> mOperationTasks;//用于暂停恢复下载缓存
+    /**
+     * 用于暂停恢复下载缓存
+     */
+    private LinkedHashMap<String, DownloadEntity> mOperationTasks;
 
     public DownloadChanger(Context context) {
         this.context = context;

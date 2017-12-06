@@ -54,7 +54,8 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
             connectThread.cancel(DownloadEntity.State.paused);
             connectThreadFuture.cancel(true);
         } else {
-            if (!entity.isSupportRange) {//单线程下载不支持暂停操作
+            if (!entity.isSupportRange) {
+                //单线程下载不支持暂停操作
                 cancel();
                 return;
             }

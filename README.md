@@ -34,5 +34,3 @@ a  MultithreadDownload libs，support simple api for dev
         super.onPause();
         DownloadManager.getInstance(this).removeObserver(watcher);
     }
-# power by stay
-该lib参考Stay的[自己动手写多任务下载](http://www.stay4it.com/course/6)课程中，如果想知道它是如何一步步封装出来的，不妨跟着课程系统学习一下，以后有需求扩展也知道怎么改了。

@@ -1,4 +1,9 @@
-package com.qw.download;
+package com.qw.download.core;
+
+import com.qw.download.utilities.DLog;
+import com.qw.download.DownloadConfig;
+import com.qw.download.entities.DownloadEntity;
+import com.qw.download.utilities.DownloadFileUtil;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -15,7 +20,6 @@ import java.net.URL;
  * email:qinwei_it@163.com
  */
 public class DownloadThread implements Runnable {
-    public static final String TAG = "DownloadThread";
     private boolean isSingleThread;
     private DownloadEntity entity;
     private int threadIndex;
@@ -30,14 +34,14 @@ public class DownloadThread implements Runnable {
         this.threadIndex = threadIndex;
         this.start = start;
         this.end = end;
-        DLog.d("isSingleThread " + isSingleThread + " threadIndex " + threadIndex + " start-end:" + start + "_" + end);
+        DLog.d("DownloadThread " + " threadIndex " + threadIndex + " start-end:" + start + "_" + end);
     }
 
     public DownloadThread(DownloadEntity entity) {
         this.entity = entity;
         threadIndex = 0;
         isSingleThread = true;
-        DLog.d("isSingleThread " + isSingleThread + " threadIndex " + threadIndex);
+        DLog.d("DownloadThread");
     }
 
     public boolean isRunning() {
@@ -48,21 +52,20 @@ public class DownloadThread implements Runnable {
         listener = null;
         state = DownloadEntity.State.paused;
         isRunning = false;
-        DLog.d("pause interrupt threadIndex " + threadIndex);
+        DLog.d("pause interrupt threadIndex " + threadIndex + " id " + entity.id);
     }
 
     public void cancel() {
         listener = null;
         state = DownloadEntity.State.cancelled;
         isRunning = false;
-        DLog.d("cancel interrupt threadIndex " + threadIndex);
+        DLog.d("cancel interrupt threadIndex " + threadIndex + " id " + entity.id);
     }
 
     public void error() {
-        listener = null;
         state = DownloadEntity.State.error;
         isRunning = false;
-        DLog.d("error interrupt threadIndex " + threadIndex + " id=" + entity.id);
+        DLog.d("error interrupt threadIndex " + threadIndex + " id " + entity.id);
     }
 
     private boolean isPause() {
@@ -83,18 +86,6 @@ public class DownloadThread implements Runnable {
         void onDownloadCompleted(int index);
 
         void onDownloadError(int index, String msg);
-
-        /**
-         * @param index
-         * @deprecated
-         */
-        void onDownloadPaused(int index);
-
-        /**
-         * @param index
-         * @deprecated
-         */
-        void onDownloadCancelled(int index);
     }
 
     public void setOnDownloadListener(OnDownloadListener listener) {
@@ -104,79 +95,78 @@ public class DownloadThread implements Runnable {
     @Override
     public void run() {
         isRunning = true;
-        HttpURLConnection connection = null;
+        HttpURLConnection connection;
         try {
             state = DownloadEntity.State.ing;
             connection = (HttpURLConnection) new URL(entity.url).openConnection();
             connection.setRequestMethod("GET");
-            connection.setConnectTimeout(DownloadConfig.CONNECT_TIME);
-            connection.setReadTimeout(DownloadConfig.READ_TIME);
+            connection.setConnectTimeout(DownloadConfig.getInstance().getConnectTimeOut());
+            connection.setReadTimeout(DownloadConfig.getInstance().getReadTimeOut());
             if (!isSingleThread) {
                 connection.setRequestProperty("Range", "bytes=" + start + "-" + end);
             }
-            File file = new File(DownloadFileUtil.getDownloadPath(entity.id));
-            InputStream is = null;
+            InputStream is;
             int code = connection.getResponseCode();
-
             if (code == HttpURLConnection.HTTP_PARTIAL) {
-                RandomAccessFile raf = new RandomAccessFile(file, "rw");
+                RandomAccessFile raf = new RandomAccessFile(DownloadFileUtil.getDownloadPath(entity.id), "rw");
                 raf.seek(start);
                 is = connection.getInputStream();
                 byte[] buffer = new byte[2048];
-                int len = -1;
+                int len;
                 while ((len = is.read(buffer)) != -1) {
-                    if (isPause() || isCancelled() || isError()) {
+                    if (isPause() || isCancelled() || isError() || !isRunning) {
                         break;
                     }
                     raf.write(buffer, 0, len);
                     if (listener != null)
                         listener.onDownloadProgressUpdate(threadIndex, len);
                 }
+                is.close();
                 raf.close();
-            } else {
-                FileOutputStream fos = new FileOutputStream(file);
+            } else if (code == HttpURLConnection.HTTP_OK) {
+                FileOutputStream fos = new FileOutputStream(DownloadFileUtil.getDownloadPath(entity.id));
                 is = connection.getInputStream();
                 byte[] buffer = new byte[2048];
-                int len = -1;
+                int len;
                 while ((len = is.read(buffer)) != -1) {
-                    if (isPause() || isCancelled() || isError()) {
+                    if (isPause() || isCancelled() || isError() || !isRunning) {
                         break;
                     }
                     fos.write(buffer, 0, len);
                     if (listener != null)
                         listener.onDownloadProgressUpdate(threadIndex, len);
                 }
+                is.close();
                 fos.close();
-            }
-            if (state == DownloadEntity.State.paused) {
-                if (listener != null)
-                    listener.onDownloadPaused(threadIndex);
-            } else if (state == DownloadEntity.State.cancelled) {
-                if (listener != null)
-                    listener.onDownloadCancelled(threadIndex);
-            } else if (state == DownloadEntity.State.error) {
-                if (listener != null)
-                    listener.onDownloadError(threadIndex, "error by frame");
             } else {
-                if (listener != null)
-                    listener.onDownloadCompleted(threadIndex);
+                state = DownloadEntity.State.error;
+                if (listener != null) {
+                    listener.onDownloadError(threadIndex, "server error code " + code);
+                }
+                return;
+            }
+            switch (state) {
+                case paused:
+                case cancelled:
+                    break;
+                case error:
+                    if (listener != null) {
+                        listener.onDownloadError(threadIndex, "inner interrupt error ");
+                    }
+                    break;
+                default:
+                    state = DownloadEntity.State.done;
+                    if (listener != null) {
+                        listener.onDownloadCompleted(threadIndex);
+                    }
+                    break;
             }
         } catch (MalformedURLException e) {
             if (listener != null)
                 listener.onDownloadError(threadIndex, e.getMessage());
         } catch (IOException e) {
-            if (state == DownloadEntity.State.paused) {
-                if (listener != null)
-                    listener.onDownloadPaused(threadIndex);
-            } else if (state == DownloadEntity.State.cancelled) {
-                if (listener != null)
-                    listener.onDownloadCancelled(threadIndex);
-            } else {
-                synchronized (DownloadThread.class) {
-                    if (listener != null) {
-                        listener.onDownloadError(threadIndex, e.getMessage());
-                    }
-                }
+            if (listener != null) {
+                listener.onDownloadError(threadIndex, e.getMessage());
             }
         } finally {
             isRunning = false;

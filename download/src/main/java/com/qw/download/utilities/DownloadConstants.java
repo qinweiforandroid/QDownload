@@ -1,4 +1,4 @@
-package com.qw.download;
+package com.qw.download.utilities;
 
 /**
  * Created by qinwei on 2016/4/14 17:19

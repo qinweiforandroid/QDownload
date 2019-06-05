@@ -1,4 +1,4 @@
-package com.qw.download;
+package com.qw.download.db;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.qw.download.entities.DownloadEntity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,16 +27,18 @@ public class DownloadDBController {
         gson = new Gson();
     }
 
-    public static DownloadDBController getInstance(Context context) {
-        synchronized (DownloadDBController.class) {
-            if (mInstance == null) {
-                mInstance = new DownloadDBController(context);
-            }
-            return mInstance;
+    public static DownloadDBController getInstance() {
+        return mInstance;
+    }
+
+    public static void init(Context context) {
+        if (mInstance == null) {
+            mInstance = new DownloadDBController(context);
+            mInstance.getDB();
         }
     }
 
-    public SQLiteDatabase getDB() {
+    private SQLiteDatabase getDB() {
         return dbHelper.getReadableDatabase();
     }
 
@@ -49,7 +52,6 @@ public class DownloadDBController {
         value.put("ranges", gson.toJson(e.ranges));
         value.put("isSupportRange", e.isSupportRange ? 0 : 1);
         long number = getDB().insert("DB_DOWNLOAD", null, value);
-//        DLog.d(TAG, "add " + e.toString() + " " + number);
         return number > 0;
     }
 
@@ -63,7 +65,6 @@ public class DownloadDBController {
         value.put("ranges", gson.toJson(e.ranges));
         value.put("isSupportRange", e.isSupportRange ? 0 : 1);
         long number = getDB().update("DB_DOWNLOAD", value, " id=?", new String[]{e.id});
-//        DLog.d(TAG, "update " + e.toString() + " " + number);
         return number > 0;
     }
 
@@ -127,7 +128,6 @@ public class DownloadDBController {
 
     public boolean delete(DownloadEntity e) {
         long number = getDB().delete("DB_DOWNLOAD", "id=?", new String[]{e.id});
-//        DLog.d(TAG, "delete " + e.toString() + " " + number);
         return number > 0;
     }
 
@@ -137,13 +137,11 @@ public class DownloadDBController {
             ids[i] = es.get(i).id;
         }
         long number = getDB().delete("DB_DOWNLOAD", "id=?", ids);
-//        DLog.d(TAG, " delete " + number);
         return number > 0;
     }
 
     public boolean deleteAll() {
         long number = getDB().delete("DB_DOWNLOAD", null, null);
-//        DLog.d(TAG, "deleteAll " + number);
         return number > 0;
     }
 }

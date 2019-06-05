@@ -11,10 +11,10 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.qw.download.DownloadEntity;
-import com.qw.download.DownloadFileUtil;
+import com.qw.download.entities.DownloadEntity;
+import com.qw.download.utilities.DownloadFileUtil;
 import com.qw.download.DownloadManager;
-import com.qw.download.DownloadWatcher;
+import com.qw.download.notify.DownloadWatcher;
 import com.qw.example.core.BaseActivity;
 
 import java.io.File;
@@ -53,10 +53,10 @@ public class MultithreadDownloadListActivity extends BaseActivity {
     @Override
     protected void initializeData(Bundle savedInstanceState) {
         setTitle("多任务多线程断点下载");
-        datas.add(new DownloadEntity("weixin.apk", "http://gdown.baidu.com/data/wisegame/1ca4848c314c1289/WeChat_880.apk"));
-        datas.add(new DownloadEntity("qq.apk", "http://gdown.baidu.com/data/wisegame/bb10246b648a16a6/QQ_410.apk"));
-        datas.add(new DownloadEntity("一皆通.apk", "http://beta.ecpay.1toall.net/downs/yjt_v1.0_20161017_02.apk"));
-        datas.add(new DownloadEntity("tiantiandongting.apk", "http://gdown.baidu.com/data/wisegame/fb900c87dfc08fb6/alixingqiu_9020100.apk"));
+        datas.add(new DownloadEntity("weixin_1420.apk", "http://gdown.baidu.com/data/wisegame/00984e94e708c913/weixin_1420.apk"));
+        datas.add(new DownloadEntity("mobileqq_android.apk", "https://qd.myapp.com/myapp/qqteam/AndroidQQ/mobileqq_android.apk"));
+        datas.add(new DownloadEntity("douyin.apk", "http://ws.yingyonghui.com/fde654f91a2f49741933840c4d0c367c/5cf720b4/apk/6447153/a1e5c3b63c3f9cf28b27baefaa0b315b"));
+        datas.add(new DownloadEntity("虾米.apk", "http://download.taobaocdn.com/wireless/xiami-android-spark/latest/xiami-android-spark_701287.apk"));
         adapter.notifyDataSetChanged();
     }
 

@@ -26,7 +26,7 @@ artifacts {
 }
 
 javadoc {
-    options{
+    options {
         encoding "UTF-8"
         charSet 'UTF-8'
         author true
@@ -42,7 +42,7 @@ install {
         pom {
             project {
                 description PROJ_DESCRIPTION
-                packaging 'aar'
+                packaging 'jar'
                 name PROJ_NAME
                 url PROJ_WEBSITEURL
                 licenses {
@@ -72,8 +72,8 @@ Properties properties = new Properties()
 properties.load(project.rootProject.file('local.properties').newDataInputStream())
 
 bintray {
-    user = properties.getProperty("bintray.user")
     key = properties.getProperty("bintray.apikey")
+    user = properties.getProperty("bintray.user")
 
 
     configurations = ['archives']

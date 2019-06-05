@@ -1,4 +1,4 @@
-package com.qw.download;
+package com.qw.download.db;
 
 import android.content.Context;
 import android.database.DatabaseErrorHandler;

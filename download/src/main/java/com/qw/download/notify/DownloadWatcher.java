@@ -1,4 +1,6 @@
-package com.qw.download;
+package com.qw.download.notify;
+
+import com.qw.download.entities.DownloadEntity;
 
 import java.util.Observable;
 import java.util.Observer;

@@ -1,10 +1,19 @@
-package com.qw.download;
+package com.qw.download.core;
 
 import android.app.Service;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
+
+import com.qw.download.utilities.DLog;
+import com.qw.download.notify.DownloadChanger;
+import com.qw.download.DownloadConfig;
+import com.qw.download.utilities.DownloadConstants;
+import com.qw.download.db.DownloadDBController;
+import com.qw.download.entities.DownloadEntity;
+import com.qw.download.utilities.DownloadFileUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,7 +27,6 @@ import java.util.concurrent.LinkedBlockingQueue;
  * email:qinwei_it@163.com
  */
 public class DownloadService extends Service {
-    public static final String TAG = "DownloadService";
     public static final int NOTIFY_DOWNLOAD_CONNECTING = 0;
     public static final int NOTIFY_DOWNLOAD_ERROR = 1;
     public static final int NOTIFY_DOWNLOAD_ING = 2;
@@ -29,7 +37,7 @@ public class DownloadService extends Service {
     public LinkedBlockingQueue<DownloadEntity> mDownloadWaitQueues;//保存等待下载的任务队列
     public HashMap<String, DownloadTask> mDownloadingTasks;//保存正在下载的任务
     private ExecutorService mExecutors;
-    public Handler handler = new Handler() {
+    public Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             DownloadEntity e = (DownloadEntity) msg.obj;
@@ -80,8 +88,8 @@ public class DownloadService extends Service {
         mExecutors = Executors.newCachedThreadPool();
         mDownloadWaitQueues = new LinkedBlockingQueue<>();
         mDownloadingTasks = new HashMap<>();
-        DownloadDBController.getInstance(getApplicationContext()).getDB();
-        ArrayList<DownloadEntity> es = DownloadDBController.getInstance(getApplicationContext()).queryAll();
+        DownloadDBController.init(this);
+        ArrayList<DownloadEntity> es = DownloadDBController.getInstance().queryAll();
         DownloadChanger.getInstance(getApplicationContext()).init(es);
         for (int i = 0; i < es.size(); i++) {
             DownloadEntity e = es.get(i);
@@ -129,7 +137,7 @@ public class DownloadService extends Service {
 
     private void add(DownloadEntity entity) {
         DownloadChanger.getInstance(getApplicationContext()).addOperationTasks(entity);
-        if (mDownloadingTasks.size() >= DownloadConfig.MAX_DOWNLOAD_TASK_SIZE) {
+        if (mDownloadingTasks.size() >= DownloadConfig.getInstance().getMaxDownloadTasks()) {
             addQueues(entity);
         } else {
             start(entity);
@@ -137,52 +145,53 @@ public class DownloadService extends Service {
     }
 
     private void addQueues(DownloadEntity entity) {
-        DLog.d("start download add queues task id=" + entity.id);
+        DLog.d("add download queues task id=" + entity.id);
         entity.state = DownloadEntity.State.wait;
         mDownloadWaitQueues.offer(entity);
         DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
-        DLog.d("add task to queues ,then wait queues size is " + mDownloadWaitQueues.size());
+        DLog.d("add download queues then queues size " + mDownloadWaitQueues.size());
     }
 
     private void start(DownloadEntity entity) {
         DLog.d("add download task id=" + entity.id);
         DownloadTask task = new DownloadTask(entity, mExecutors, handler);
         mDownloadingTasks.put(entity.id, task);
-        DLog.d("the task is added then mDownloadingTasks size is" + mDownloadingTasks.size());
+        DLog.d("add download task then downloadingTasks size " + mDownloadingTasks.size());
         task.start();
     }
 
     private void resume(DownloadEntity entity) {
-        DLog.d("resume download task id=" + entity.id);
+        DLog.d("resume download task id " + entity.id);
         add(entity);
     }
 
     private void pause(DownloadEntity entity) {
-        DLog.d("pause download task id=" + entity.id);
+        DLog.d("pause download task id " + entity.id);
         DownloadTask task = mDownloadingTasks.get(entity.id);
-        if (task != null) {//正在进行的task 暂停操作
+        if (task != null) {
+            //正在进行的task 暂停操作
             task.pause();
-        } else {//下载队列的task 暂停操作
+        } else {
+            //下载队列的task 暂停操作
             entity.state = DownloadEntity.State.paused;
             mDownloadWaitQueues.remove(entity);
-            DLog.d("waiting queues  poll then queues size is" + mDownloadWaitQueues.size());
+            DLog.d("queues poll queues size " + mDownloadWaitQueues.size());
             DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
         }
     }
 
     private void cancel(DownloadEntity entity) {
-        DLog.d("cancel download task id=" + entity.id);
+        DLog.d("cancel download task id " + entity.id);
         DownloadTask task = mDownloadingTasks.get(entity.id);
         if (task != null) {
             task.cancel();
         } else {
             entity.state = DownloadEntity.State.cancelled;
             mDownloadWaitQueues.remove(entity);
-            DLog.d("waiting queues  poll then queues size is" + mDownloadWaitQueues.size());
+            DLog.d("queues poll queues size " + mDownloadWaitQueues.size());
             DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
         }
-//        delete db data
-        DownloadDBController.getInstance(getApplicationContext()).delete(entity);
+        DownloadDBController.getInstance().delete(entity);
     }
 
     private void stopAll() {

@@ -1,6 +1,9 @@
-package com.qw.download;
+package com.qw.download.notify;
 
 import android.content.Context;
+
+import com.qw.download.entities.DownloadEntity;
+import com.qw.download.db.DownloadDBController;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -35,7 +38,6 @@ public class DownloadChanger extends Observable {
 
     public void notifyDataChanged(DownloadEntity entity) {
         mOperationTasks.put(entity.id, entity);
-        DownloadDBController.getInstance(context).addOrUpdate(entity);
         setChanged();
         notifyObservers(entity);
     }

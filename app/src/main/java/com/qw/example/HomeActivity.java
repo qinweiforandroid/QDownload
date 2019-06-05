@@ -39,7 +39,7 @@ public class HomeActivity extends BaseActivity {
         setTitle("QDownload示例");
         //初始化下载服务
         DownloadManager.getInstance(this);
-        mHomeDownloadDirPathLabel.setText("下载文件夹路径:" + DownloadConfig.getInstance().getDownloadDirPath());
+        mHomeDownloadDirPathLabel.setText("下载文件夹路径:" + DownloadConfig.getInstance().getDownloadDir().getAbsolutePath());
     }
 
     public void goSingleDownload(View v) {

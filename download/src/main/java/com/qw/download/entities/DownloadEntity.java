@@ -1,4 +1,4 @@
-package com.qw.download;
+package com.qw.download.entities;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -32,7 +32,7 @@ public class DownloadEntity implements Serializable {
     }
 
     public enum State {
-        idle, connect, ing, resume, paused, cancelled, error, done, wait
+        idle, connect, ing, paused, cancelled, error, done, wait
     }
 
     @Override

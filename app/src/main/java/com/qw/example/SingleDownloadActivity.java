@@ -6,9 +6,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.qw.download.DownloadEntity;
+import com.qw.download.entities.DownloadEntity;
 import com.qw.download.DownloadManager;
-import com.qw.download.DownloadWatcher;
+import com.qw.download.notify.DownloadWatcher;
 import com.qw.example.core.BaseActivity;
 
 /**

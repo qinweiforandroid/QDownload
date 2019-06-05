@@ -29,6 +29,6 @@
             android:name=".SingleDownloadActivity"
             android:screenOrientation="portrait" />
 
-        <service android:name="com.qw.download.DownloadService" />
+        <service android:name="com.qw.download.core.DownloadService" />
     </application>
 </manifest>

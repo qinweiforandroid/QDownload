@@ -1,50 +1,54 @@
 package com.qw.download;
 
+import android.os.Environment;
+
+import java.io.File;
+
 /**
  * Created by qinwei on 2016/4/21 10:09
  * email:qinwei_it@163.com
  */
 public class DownloadConfig {
     private static DownloadConfig mInstance;
-    public static final int MAX_DOWNLOAD_TASK_SIZE = 2;
-    public static final int MAX_DOWNLOAD_THREAD_SIZE = 2;
-    public static final int CONNECT_TIME = 5 * 1000;
-    public static final int READ_TIME = 5 * 1000;
-    public static final int MAX_RETRY_COUNT = 3;
-    public boolean isDevelop = true;
-    public static final String DOWNLOAD_DEFAULT_DIR = "/download";
-    private  String downloadDirPath;
+    private int max_download_tasks = 3;
+    private int max_download_threads = 2;
+    private int max_retry_count = 3;
+    private int connect_time_out = 10 * 1000;
+    private int read_time_out = 10 * 1000;
+    private File downloadDir;
 
-    public static DownloadConfig getInstance(){
-        synchronized (DownloadConfig.class) {
-            if(mInstance==null){
-                mInstance=new DownloadConfig();
-            }
-            return mInstance;
+    public synchronized static DownloadConfig getInstance() {
+        if (mInstance == null) {
+            mInstance = new DownloadConfig();
         }
-    }
-    private DownloadConfig(){
-        //默认下载文件夹路径
-        downloadDirPath=DownloadFileUtil.getDownloadDir(DOWNLOAD_DEFAULT_DIR);
+        return mInstance;
     }
 
-    public DownloadConfig setDebug(boolean flag) {
-        isDevelop = flag;
-        return this;
+    private DownloadConfig() {
+        downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
     }
 
-    /**
-     *
-     * @param downloadDirPath 下载文件夹完整路径
-     * @return
-     */
-    public DownloadConfig setDownloadDirPath(String downloadDirPath) {
-        this.downloadDirPath =DownloadFileUtil.getDownloadDir(downloadDirPath);
-        return this;
+    public int getMaxDownloadTasks() {
+        return max_download_tasks;
     }
 
-    public String getDownloadDirPath() {
-        return downloadDirPath;
+    public int getMaxDownloadThreads() {
+        return max_download_threads;
     }
 
+    public int getMaxRetryCount() {
+        return max_retry_count;
+    }
+
+    public int getConnectTimeOut() {
+        return connect_time_out;
+    }
+
+    public int getReadTimeOut() {
+        return read_time_out;
+    }
+
+    public File getDownloadDir() {
+        return downloadDir;
+    }
 }

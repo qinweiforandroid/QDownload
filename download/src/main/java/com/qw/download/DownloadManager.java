@@ -3,6 +3,12 @@ package com.qw.download;
 import android.content.Context;
 import android.content.Intent;
 
+import com.qw.download.core.DownloadService;
+import com.qw.download.entities.DownloadEntity;
+import com.qw.download.notify.DownloadChanger;
+import com.qw.download.notify.DownloadWatcher;
+import com.qw.download.utilities.DownloadConstants;
+
 /**
  * 下载框架总控制器
  * Created by qinwei on 2016/4/14 16:04

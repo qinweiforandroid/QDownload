@@ -1,7 +1,9 @@
 package com.qw.example;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +12,8 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import androidx.core.content.FileProvider;
 
 import com.qw.download.entities.DownloadEntity;
 import com.qw.download.utilities.DownloadFileUtil;
@@ -162,18 +166,29 @@ public class MultithreadDownloadListActivity extends BaseActivity {
                         return;
                     }
                     // 通过Intent安装APK文件
-                    Intent i = new Intent(Intent.ACTION_VIEW);
-                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    i.setDataAndType(Uri.parse("file://" + apkfile.toString()),
-                            "application/vnd.android.package-archive");
-                    startActivity(i);
-                    android.os.Process.killProcess(android.os.Process.myPid());
+                    loadInstallApk(MultithreadDownloadListActivity.this, apkfile);
                     break;
                 default:
                     break;
             }
         }
 
+    }
+
+    public static void loadInstallApk(Context context, File file) {
+        if (!file.exists()) {
+            return;
+        }
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (Build.VERSION.SDK_INT >= 24) {
+            Uri apkUri = FileProvider.getUriForFile(context, "com.qw.example.fileprovider", file);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+        } else {
+            intent.setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
+        }
+        context.startActivity(intent);
     }
 
     @Override

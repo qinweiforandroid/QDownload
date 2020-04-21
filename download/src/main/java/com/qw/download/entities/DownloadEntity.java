@@ -32,7 +32,38 @@ public class DownloadEntity implements Serializable {
     }
 
     public enum State {
-        idle, connect, ing, paused, cancelled, error, done, wait
+        /**
+         * 空闲
+         */
+        idle,
+        /**
+         * 连接中
+         */
+        connect,
+        /**
+         * 下载中
+         */
+        ing,
+        /**
+         * 已暂停
+         */
+        paused,
+        /**
+         * 已取消
+         */
+        cancelled,
+        /**
+         * 错误
+         */
+        error,
+        /**
+         * 完成
+         */
+        done,
+        /**
+         * 等待
+         */
+        wait
     }
 
     @Override

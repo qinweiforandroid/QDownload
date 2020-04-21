@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 表示Context.getCacheDir()目录或者其子目录。 示例 : /data/data/com.chen.gradle/cache/file-->
+    <cache-path
+        name="name_cache_path"
+        path="file" />
+
+    <external-cache-path
+        name="name_external_cache_path"
+        path="Download" />
+    <external-path
+        name="mDownload"
+        path="Download" />
+</paths>

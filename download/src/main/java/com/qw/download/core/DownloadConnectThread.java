@@ -4,6 +4,7 @@ import android.webkit.URLUtil;
 
 import com.qw.download.DownloadConfig;
 import com.qw.download.entities.DownloadEntity;
+import com.qw.download.utilities.DLog;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -56,6 +57,9 @@ public class DownloadConnectThread implements Runnable {
             connection.setReadTimeout(DownloadConfig.getInstance().getReadTimeOut());
             boolean isSupportRange;
             int contentLength = connection.getContentLength();
+
+            String contentType = connection.getHeaderField("Content-Type");
+            DLog.d("id:" + entity.id + " contentType:" + contentType);
             int code = connection.getResponseCode();
             if (isSuccessful(code)) {
                 String ranges = connection.getHeaderField("Accept-Ranges");

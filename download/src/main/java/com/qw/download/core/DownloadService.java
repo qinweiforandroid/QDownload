@@ -191,6 +191,7 @@ public class DownloadService extends Service {
             DLog.d("queues poll queues size " + mDownloadWaitQueues.size());
             DownloadChanger.getInstance(getApplicationContext()).notifyDataChanged(entity);
         }
+        DownloadChanger.getInstance(getApplicationContext()).deleteOperationTasks(entity);
         DownloadDBController.getInstance().delete(entity);
     }
 

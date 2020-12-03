@@ -4,10 +4,10 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.qw.download.core.DownloadService;
-import com.qw.download.entities.DownloadEntity;
+import com.qw.download.entities.DownloadEntry;
 import com.qw.download.notify.DownloadChanger;
 import com.qw.download.notify.DownloadWatcher;
-import com.qw.download.utilities.DownloadConstants;
+import com.qw.download.utilities.DConstants;
 
 /**
  * 下载框架总控制器
@@ -36,10 +36,10 @@ public class DownloadManager {
     /**
      * 开启下载
      */
-    public void addDownload(DownloadEntity entity) {
+    public void addDownload(DownloadEntry entity) {
         Intent intent = new Intent(context, DownloadService.class);
-        intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ENTITY, entity);
-        intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ACTION, DownloadConstants.KEY_DOWNLOAD_ACTION_ADD);
+        intent.putExtra(DConstants.KEY_DOWNLOAD_ENTRY, entity);
+        intent.putExtra(DConstants.KEY_DOWNLOAD_ACTION, DConstants.KEY_DOWNLOAD_ACTION_ADD);
         context.startService(intent);
     }
 
@@ -48,10 +48,10 @@ public class DownloadManager {
      *
      * @param entity
      */
-    public void pauseDownload(DownloadEntity entity) {
+    public void pauseDownload(DownloadEntry entity) {
         Intent intent = new Intent(context, DownloadService.class);
-        intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ENTITY, entity);
-        intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ACTION, DownloadConstants.KEY_DOWNLOAD_ACTION_PAUSE);
+        intent.putExtra(DConstants.KEY_DOWNLOAD_ENTRY, entity);
+        intent.putExtra(DConstants.KEY_DOWNLOAD_ACTION, DConstants.KEY_DOWNLOAD_ACTION_PAUSE);
         context.startService(intent);
     }
 
@@ -60,10 +60,10 @@ public class DownloadManager {
      *
      * @param entity
      */
-    public void resumeDownload(DownloadEntity entity) {
+    public void resumeDownload(DownloadEntry entity) {
         Intent intent = new Intent(context, DownloadService.class);
-        intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ENTITY, entity);
-        intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ACTION, DownloadConstants.KEY_DOWNLOAD_ACTION_RESUME);
+        intent.putExtra(DConstants.KEY_DOWNLOAD_ENTRY, entity);
+        intent.putExtra(DConstants.KEY_DOWNLOAD_ACTION, DConstants.KEY_DOWNLOAD_ACTION_RESUME);
         context.startService(intent);
     }
 
@@ -72,10 +72,10 @@ public class DownloadManager {
      *
      * @param entity
      */
-    public void cancelDownload(DownloadEntity entity) {
+    public void cancelDownload(DownloadEntry entity) {
         Intent intent = new Intent(context, DownloadService.class);
-        intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ENTITY, entity);
-        intent.putExtra(DownloadConstants.KEY_DOWNLOAD_ACTION, DownloadConstants.KEY_DOWNLOAD_ACTION_CANCEL);
+        intent.putExtra(DConstants.KEY_DOWNLOAD_ENTRY, entity);
+        intent.putExtra(DConstants.KEY_DOWNLOAD_ACTION, DConstants.KEY_DOWNLOAD_ACTION_CANCEL);
         context.startService(intent);
     }
 
@@ -87,7 +87,7 @@ public class DownloadManager {
         DownloadChanger.getInstance(context).deleteObserver(watcher);
     }
 
-    public DownloadEntity findById(String id) {
+    public DownloadEntry findById(String id) {
         return DownloadChanger.getInstance(context).findById(id);
     }
 }

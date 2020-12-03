@@ -1,6 +1,6 @@
 package com.qw.download.notify;
 
-import com.qw.download.entities.DownloadEntity;
+import com.qw.download.entities.DownloadEntry;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -13,10 +13,10 @@ import java.util.Observer;
 public abstract class DownloadWatcher implements Observer {
     @Override
     public void update(Observable observable, Object data) {
-        if (data instanceof DownloadEntity) {
-            onDataChanged((DownloadEntity) data);
+        if (data instanceof DownloadEntry) {
+            onDataChanged((DownloadEntry) data);
         }
     }
 
-    protected abstract void onDataChanged(DownloadEntity e);
+    protected abstract void onDataChanged(DownloadEntry e);
 }

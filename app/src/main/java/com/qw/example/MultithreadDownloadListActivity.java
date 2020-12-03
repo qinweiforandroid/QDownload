@@ -15,8 +15,9 @@ import android.widget.TextView;
 
 import androidx.core.content.FileProvider;
 
-import com.qw.download.entities.DownloadEntity;
-import com.qw.download.utilities.DownloadFileUtil;
+import com.qw.download.DownloadConfig;
+import com.qw.download.entities.DownloadEntry;
+import com.qw.download.utilities.FileUtilities;
 import com.qw.download.DownloadManager;
 import com.qw.download.notify.DownloadWatcher;
 import com.qw.example.core.BaseActivity;
@@ -30,12 +31,12 @@ import java.util.ArrayList;
  */
 public class MultithreadDownloadListActivity extends BaseActivity {
     private ListView mDownloadLv;
-    private ArrayList<DownloadEntity> datas = new ArrayList<>();
+    private ArrayList<DownloadEntry> datas = new ArrayList<>();
     private DownloadAdapter adapter;
     private DownloadWatcher watcher = new DownloadWatcher() {
         @Override
-        protected void onDataChanged(DownloadEntity e) {
-            if (e.state == DownloadEntity.State.cancelled) {
+        protected void onDataChanged(DownloadEntry e) {
+            if (e.state == DownloadEntry.State.cancelled) {
                 datas.remove(e);
             }
             adapter.notifyDataSetChanged();
@@ -57,10 +58,10 @@ public class MultithreadDownloadListActivity extends BaseActivity {
     @Override
     protected void initializeData(Bundle savedInstanceState) {
         setTitle("多任务多线程断点下载");
-        datas.add(new DownloadEntity("weixin_1420.apk", "http://gdown.baidu.com/data/wisegame/00984e94e708c913/weixin_1420.apk"));
-        datas.add(new DownloadEntity("mobileqq_android.apk", "https://qd.myapp.com/myapp/qqteam/AndroidQQ/mobileqq_android.apk"));
-        datas.add(new DownloadEntity("douyin.apk", "http://ws.yingyonghui.com/fde654f91a2f49741933840c4d0c367c/5cf720b4/apk/6447153/a1e5c3b63c3f9cf28b27baefaa0b315b"));
-        datas.add(new DownloadEntity("虾米.apk", "http://download.taobaocdn.com/wireless/xiami-android-spark/latest/xiami-android-spark_701287.apk"));
+        datas.add(new DownloadEntry("weixin_1420.apk", "http://gdown.baidu.com/data/wisegame/00984e94e708c913/weixin_1420.apk"));
+        datas.add(new DownloadEntry("mobileqq_android.apk", "https://qd.myapp.com/myapp/qqteam/AndroidQQ/mobileqq_android.apk"));
+        datas.add(new DownloadEntry("douyin.apk", "http://ws.yingyonghui.com/fde654f91a2f49741933840c4d0c367c/5cf720b4/apk/6447153/a1e5c3b63c3f9cf28b27baefaa0b315b"));
+        datas.add(new DownloadEntry("虾米.apk", "http://download.taobaocdn.com/wireless/xiami-android-spark/latest/xiami-android-spark_701287.apk"));
         adapter.notifyDataSetChanged();
     }
 
@@ -101,7 +102,7 @@ public class MultithreadDownloadListActivity extends BaseActivity {
     class Holder implements View.OnClickListener {
         private TextView mDownloadItemInfoLabel;
         private Button mDownloadItemOperationBtn;
-        private DownloadEntity e;
+        private DownloadEntry e;
 
         public void initializeView(View v) {
             mDownloadItemInfoLabel = (TextView) v.findViewById(R.id.mDownloadItemInfoLabel);
@@ -111,7 +112,7 @@ public class MultithreadDownloadListActivity extends BaseActivity {
 
         public void initializeData(int position) {
             e = datas.get(position);
-            DownloadEntity cache = DownloadManager.getInstance(getApplicationContext()).findById(e.id);
+            DownloadEntry cache = DownloadManager.getInstance(getApplicationContext()).findById(e.id);
             if (cache != null) {
                 e = cache;
             }
@@ -160,13 +161,12 @@ public class MultithreadDownloadListActivity extends BaseActivity {
                     DownloadManager.getInstance(getApplicationContext()).addDownload(e);
                     break;
                 case done:
-                    String path = DownloadFileUtil.getDownloadPath(e.id);
-                    File apkfile = new File(path);
-                    if (!apkfile.exists()) {
+                    File apkFile = DownloadConfig.getInstance().getDownloadFile(e.url);
+                    if (!apkFile.exists()) {
                         return;
                     }
                     // 通过Intent安装APK文件
-                    loadInstallApk(MultithreadDownloadListActivity.this, apkfile);
+                    loadInstallApk(MultithreadDownloadListActivity.this, apkFile);
                     break;
                 default:
                     break;

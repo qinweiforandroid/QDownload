@@ -7,7 +7,7 @@ import java.util.HashMap;
  * Created by qinwei on 2016/4/14 17:16
  * email:qinwei_it@163.com
  */
-public class DownloadEntity implements Serializable {
+public class DownloadEntry implements Serializable {
     public String id;
     public String url;
     public boolean isSupportRange;
@@ -16,11 +16,11 @@ public class DownloadEntity implements Serializable {
     public State state;
     public HashMap<Integer, Long> ranges;
 
-    public DownloadEntity() {
+    public DownloadEntry() {
         state = State.idle;
     }
 
-    public DownloadEntity(String id, String url) {
+    public DownloadEntry(String id, String url) {
         this.id = id;
         this.url = url;
         state = State.idle;

@@ -6,7 +6,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.qw.download.entities.DownloadEntity;
+import com.qw.download.entities.DownloadEntry;
 import com.qw.download.DownloadManager;
 import com.qw.download.notify.DownloadWatcher;
 import com.qw.example.core.BaseActivity;
@@ -16,13 +16,13 @@ import com.qw.example.core.BaseActivity;
  * email:qinwei_it@163.com
  */
 public class SingleDownloadActivity extends BaseActivity implements View.OnClickListener {
-    private DownloadEntity entity;
+    private DownloadEntry entity;
     private TextView mSingleDownloadInfoLabel;
     private Button mSingleDownloadAddBtn;
     private Button mSingleDownloadStopBtn;
     private DownloadWatcher watcher = new DownloadWatcher() {
         @Override
-        protected void onDataChanged(DownloadEntity e) {
+        protected void onDataChanged(DownloadEntry e) {
             if (entity != null) {
                 if (!e.equals(entity)) return;
                 mSingleDownloadInfoLabel.setText(e.toString());
@@ -54,7 +54,7 @@ public class SingleDownloadActivity extends BaseActivity implements View.OnClick
     @Override
     public void onClick(View v) {
         if (entity == null) {
-            entity = new DownloadEntity();
+            entity = new DownloadEntry();
             entity.id = "weixin680_for_single_download.apk";
             entity.url = "http://gdown.baidu.com/data/wisegame/a2216288661d09b4/weixin_680.apk";
             entity.isSupportRange = false;

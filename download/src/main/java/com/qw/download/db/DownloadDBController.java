@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.qw.download.entities.DownloadEntity;
+import com.qw.download.entities.DownloadEntry;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,7 +42,7 @@ public class DownloadDBController {
         return dbHelper.getReadableDatabase();
     }
 
-    public boolean add(DownloadEntity e) {
+    public boolean add(DownloadEntry e) {
         ContentValues value = new ContentValues();
         value.put("id", e.id);
         value.put("url", e.url);
@@ -55,7 +55,7 @@ public class DownloadDBController {
         return number > 0;
     }
 
-    public boolean update(DownloadEntity e) {
+    public boolean update(DownloadEntry e) {
         ContentValues value = new ContentValues();
         value.put("id", e.id);
         value.put("url", e.url);
@@ -68,7 +68,7 @@ public class DownloadDBController {
         return number > 0;
     }
 
-    public synchronized boolean addOrUpdate(DownloadEntity e) {
+    public synchronized boolean addOrUpdate(DownloadEntry e) {
         if (exists(e.id)) {
             return update(e);
         } else {
@@ -76,12 +76,12 @@ public class DownloadDBController {
         }
     }
 
-    public DownloadEntity findById(String id) {
-        DownloadEntity e = null;
+    public DownloadEntry findById(String id) {
+        DownloadEntry e = null;
         Cursor cursor = getDB().rawQuery("SELECT * from DB_DOWNLOAD WHERE id=?", new String[]{id});
         while (cursor.moveToNext()) {
             if (e == null) {
-                e = new DownloadEntity();
+                e = new DownloadEntry();
             }
             e.id = cursor.getString(cursor.getColumnIndex("id"));
             e.url = cursor.getString(cursor.getColumnIndex("url"));
@@ -90,7 +90,7 @@ public class DownloadDBController {
             e.ranges = gson.fromJson(cursor.getString(cursor.getColumnIndex("ranges")), new TypeToken<HashMap<Integer, Long>>() {
             }.getType());
             e.isSupportRange = cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0 ? true : false;
-            e.state = Enum.valueOf(DownloadEntity.State.class, cursor.getString(cursor.getColumnIndex("state")));
+            e.state = Enum.valueOf(DownloadEntry.State.class, cursor.getString(cursor.getColumnIndex("state")));
         }
         cursor.close();
         return e;
@@ -106,12 +106,12 @@ public class DownloadDBController {
         return false;
     }
 
-    public ArrayList<DownloadEntity> queryAll() {
-        ArrayList<DownloadEntity> es = new ArrayList<>();
-        DownloadEntity e = null;
+    public ArrayList<DownloadEntry> queryAll() {
+        ArrayList<DownloadEntry> es = new ArrayList<>();
+        DownloadEntry e = null;
         Cursor cursor = getDB().rawQuery("SELECT * from DB_DOWNLOAD", null);
         while (cursor.moveToNext()) {
-            e = new DownloadEntity();
+            e = new DownloadEntry();
             e.id = cursor.getString(cursor.getColumnIndex("id"));
             e.url = cursor.getString(cursor.getColumnIndex("url"));
             e.contentLength = cursor.getInt(cursor.getColumnIndex("contentLength"));
@@ -119,19 +119,19 @@ public class DownloadDBController {
             e.ranges = gson.fromJson(cursor.getString(cursor.getColumnIndex("ranges")), new TypeToken<HashMap<Integer, Long>>() {
             }.getType());
             e.isSupportRange = cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0 ? true : false;
-            e.state = Enum.valueOf(DownloadEntity.State.class, cursor.getString(cursor.getColumnIndex("state")));
+            e.state = Enum.valueOf(DownloadEntry.State.class, cursor.getString(cursor.getColumnIndex("state")));
             es.add(e);
         }
         cursor.close();
         return es;
     }
 
-    public boolean delete(DownloadEntity e) {
+    public boolean delete(DownloadEntry e) {
         long number = getDB().delete("DB_DOWNLOAD", "id=?", new String[]{e.id});
         return number > 0;
     }
 
-    public boolean delete(ArrayList<DownloadEntity> es) {
+    public boolean delete(ArrayList<DownloadEntry> es) {
         String[] ids = new String[es.size()];
         for (int i = 0; i < es.size(); i++) {
             ids[i] = es.get(i).id;

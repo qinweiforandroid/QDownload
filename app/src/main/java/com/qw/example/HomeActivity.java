@@ -2,7 +2,9 @@ package com.qw.example;
 
 import android.content.Intent;
 import android.os.Bundle;
+
 import androidx.annotation.Nullable;
+
 import android.view.View;
 import android.widget.TextView;
 
@@ -39,7 +41,7 @@ public class HomeActivity extends BaseActivity {
         setTitle("QDownload示例");
         //初始化下载服务
         DownloadManager.getInstance(this);
-        mHomeDownloadDirPathLabel.setText("下载文件夹路径:" + DownloadConfig.getInstance().getDownloadDir().getAbsolutePath());
+        mHomeDownloadDirPathLabel.setText("下载文件夹路径:" + DownloadConfig.getInstance().getDownloadDir());
     }
 
     public void goSingleDownload(View v) {

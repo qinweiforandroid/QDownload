@@ -2,8 +2,7 @@ package com.qw.download.notify;
 
 import android.content.Context;
 
-import com.qw.download.entities.DownloadEntity;
-import com.qw.download.db.DownloadDBController;
+import com.qw.download.entities.DownloadEntry;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -20,7 +19,7 @@ public class DownloadChanger extends Observable {
     /**
      * 用于暂停恢复下载缓存
      */
-    private LinkedHashMap<String, DownloadEntity> mOperationTasks;
+    private LinkedHashMap<String, DownloadEntry> mOperationTasks;
 
     public DownloadChanger(Context context) {
         this.context = context;
@@ -36,27 +35,27 @@ public class DownloadChanger extends Observable {
         }
     }
 
-    public void notifyDataChanged(DownloadEntity entity) {
+    public void notifyDataChanged(DownloadEntry entity) {
         mOperationTasks.put(entity.id, entity);
         setChanged();
         notifyObservers(entity);
     }
 
-    public void addOperationTasks(DownloadEntity entity) {
+    public void addOperationTasks(DownloadEntry entity) {
         mOperationTasks.put(entity.id, entity);
     }
 
-    public DownloadEntity findById(String id) {
+    public DownloadEntry findById(String id) {
         return mOperationTasks.get(id);
     }
 
-    public void init(ArrayList<DownloadEntity> es) {
+    public void init(ArrayList<DownloadEntry> es) {
         for (int i = 0; i < es.size(); i++) {
             addOperationTasks(es.get(i));
         }
     }
 
-    public void deleteOperationTasks(DownloadEntity entity) {
+    public void deleteOperationTasks(DownloadEntry entity) {
         mOperationTasks.remove(entity.id);
     }
 }

@@ -3,11 +3,10 @@ package com.qw.download.core;
 import android.os.Handler;
 import android.os.Message;
 
-import com.qw.download.db.DownloadDBController;
-import com.qw.download.utilities.DLog;
 import com.qw.download.DownloadConfig;
-import com.qw.download.entities.DownloadEntity;
-import com.qw.download.utilities.DownloadFileUtil;
+import com.qw.download.db.DownloadDBController;
+import com.qw.download.entities.DownloadEntry;
+import com.qw.download.utilities.DLog;
 import com.qw.download.utilities.TickTack;
 
 import java.io.File;
@@ -19,44 +18,52 @@ import java.util.concurrent.ExecutorService;
  * Created by qinwei on 2016/4/14 16:04
  * email:qinwei_it@163.com
  */
-public class DownloadTask implements DownloadConnectThread.OnConnectThreadListener, DownloadThread.OnDownloadListener {
+public class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThread.OnDownloadListener {
+    private final static String TAG = "Task";
     private ExecutorService mExecutors;
     private final Handler mHandler;
-    private volatile DownloadEntity entity;
+    private volatile DownloadEntry entry;
     private volatile DownloadThread[] threads;
-    private volatile DownloadEntity.State[] states;
-    private volatile DownloadConnectThread connectThread;
+    private volatile DownloadEntry.State[] states;
+    private volatile ConnectThread connectThread;
     private volatile int currentRetryIndex;
+    private final File destFile;
 
-    public DownloadTask(DownloadEntity entity, ExecutorService mExecutors, Handler handler) {
-        this.entity = entity;
+    public DownloadTask(DownloadEntry entry, ExecutorService mExecutors, Handler handler) {
+        this.entry = entry;
         this.mExecutors = mExecutors;
         this.mHandler = handler;
+        this.destFile = DownloadConfig.getInstance().getDownloadFile(entry.url);
     }
 
     public void start() {
+        d("start " + entry.id);
         currentRetryIndex = 0;
-        if (entity.contentLength == 0) {
-            loadDownloadFileSimpleInfo();
+        if (entry.contentLength == 0) {
+            connect();
         } else {
-            loadStartDownload();
+            download();
         }
     }
 
-    private void loadDownloadFileSimpleInfo() {
-        DLog.d("loadDownloadFileSimpleInfo id " + entity.id);
-        connectThread = new DownloadConnectThread(entity);
-        connectThread.setOnConnectThreadListener(this);
-        entity.state = DownloadEntity.State.connect;
+    private void connect() {
+        d("connect " + entry.id);
+        connectThread = new ConnectThread(entry.url, this);
+        entry.state = DownloadEntry.State.connect;
         mExecutors.execute(connectThread);
         notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_CONNECTING);
     }
 
+    private void d(String msg) {
+        DLog.d(TAG + " " + msg);
+    }
+
     public void pause() {
+        d("pause " + entry.id);
         if (connectThread != null && connectThread.isRunning()) {
-            connectThread.cancel(DownloadEntity.State.cancelled);
+            connectThread.cancel();
         } else {
-            if (!entity.isSupportRange) {
+            if (!entry.isSupportRange) {
                 //单线程下载不支持暂停操作
                 cancel();
                 return;
@@ -67,14 +74,14 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
                 }
             }
         }
-        entity.state = DownloadEntity.State.paused;
-        DLog.d("pause notifyUpdate downloadEntry info: " + entity.id + "/" + entity.state.name());
+        entry.state = DownloadEntry.State.paused;
         notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_PAUSED);
     }
 
     public void cancel() {
+        d("cancel " + entry.id);
         if (connectThread != null && connectThread.isRunning()) {
-            connectThread.cancel(DownloadEntity.State.cancelled);
+            connectThread.cancel();
         } else {
             for (int i = 0; i < threads.length; i++) {
                 if (threads[i] != null && threads[i].isRunning()) {
@@ -82,71 +89,64 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
                 }
             }
         }
-
-        File file = new File(DownloadFileUtil.getDownloadPath(entity.id));
-        if (file.exists()) {
-            boolean delete = file.delete();
-            if (delete) {
-                DLog.d("delete download temp file success id=" + entity.id);
+        if (destFile.exists()) {
+            if (destFile.delete()) {
+                d("cancel delete temp " + destFile);
             }
         }
-        entity.state = DownloadEntity.State.cancelled;
-        entity.reset();
-        DLog.d("cancel notifyUpdate downloadEntry info: " + entity.id + "/" + entity.state.name());
+        entry.state = DownloadEntry.State.cancelled;
+        entry.reset();
         notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_CANCELLED);
     }
 
-    private void loadStartDownload() {
-        DLog.d("loadStartDownload id " + entity.id);
-        entity.state = DownloadEntity.State.ing;
+    private void download() {
+        d("download " + entry.id);
+        entry.state = DownloadEntry.State.ing;
         notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ING);
-        if (entity.isSupportRange) {
-            startMultithreadingDownload();
+        if (entry.isSupportRange) {
+            multithreadingDownload();
         } else {
-            startSingleThreadDownload();
+            singleThreadDownload();
         }
     }
 
-    private void startMultithreadingDownload() {
-        DLog.d("startMultithreadingDownload id " + entity.id);
-        threads = new DownloadThread[DownloadConfig.getInstance().getMaxDownloadThreads()];
-        states = new DownloadEntity.State[DownloadConfig.getInstance().getMaxDownloadThreads()];
+    private void multithreadingDownload() {
+        d("startMultithreadingDownload  " + entry.id);
+        threads = new DownloadThread[DownloadConfig.getInstance().getMaxThread()];
+        states = new DownloadEntry.State[DownloadConfig.getInstance().getMaxThread()];
         int start;
         int end;
-        if (entity.ranges == null) {
-            DLog.d("startMultithreadingDownload init ranges id " + entity.id);
-            entity.ranges = new HashMap<>();
-            for (int i = 0; i < DownloadConfig.getInstance().getMaxDownloadThreads(); i++) {
-                entity.ranges.put(i, 0L);
+        if (entry.ranges == null) {
+            entry.ranges = new HashMap<>();
+            for (int i = 0; i < DownloadConfig.getInstance().getMaxThread(); i++) {
+                entry.ranges.put(i, 0L);
             }
         }
-        int block = (int) (entity.contentLength / threads.length);
+        int block = (int) (entry.contentLength / threads.length);
         for (int i = 0; i < threads.length; i++) {
-            start = (int) (i * block + entity.ranges.get(i));
+            start = (int) (i * block + entry.ranges.get(i));
             if (i != threads.length - 1) {
                 end = (i + 1) * block - 1;
             } else {
-                end = (int) entity.contentLength;
+                end = (int) entry.contentLength;
             }
             if (start < end) {
-                threads[i] = new DownloadThread(entity, i, start, end);
-                states[i] = DownloadEntity.State.ing;
-                threads[i].setOnDownloadListener(this);
+                threads[i] = new DownloadThread(entry.url, destFile, i, start, end, this);
+                states[i] = DownloadEntry.State.ing;
                 mExecutors.execute(threads[i]);
             } else {
-                states[i] = DownloadEntity.State.done;
+                states[i] = DownloadEntry.State.done;
             }
         }
     }
 
-    private void startSingleThreadDownload() {
-        DLog.d("startSingleThreadDownload id " + entity.id);
+    private void singleThreadDownload() {
+        d("startSingleThreadDownload " + entry.id);
         threads = new DownloadThread[1];
-        states = new DownloadEntity.State[1];
-        threads[0] = new DownloadThread(entity);
-        threads[0].setOnDownloadListener(this);
-        states[0] = DownloadEntity.State.ing;
-        entity.state = DownloadEntity.State.ing;
+        states = new DownloadEntry.State[1];
+        threads[0] = new DownloadThread(entry.url, destFile, 0, 0, 0, this);
+        states[0] = DownloadEntry.State.ing;
+        entry.state = DownloadEntry.State.ing;
         mExecutors.execute(threads[0]);
         notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ING);
     }
@@ -154,98 +154,83 @@ public class DownloadTask implements DownloadConnectThread.OnConnectThreadListen
 
     @Override
     public synchronized void onConnectCompleted(long contentLength, boolean isSupportRange) {
-        entity.isSupportRange = isSupportRange;
-        entity.contentLength = contentLength;
-        DLog.d("loadDownloadFileSimpleInfo success " + "id " + entity.id + " contentLength:" + contentLength + ",isSupportRange:" + isSupportRange);
-        loadStartDownload();
+        entry.isSupportRange = isSupportRange;
+        entry.contentLength = contentLength;
+        d("onConnectCompleted " + entry.id + " length:" + contentLength + ",isSupportRange:" + isSupportRange);
+        download();
     }
 
     @Override
-    public synchronized void onConnectError(DownloadEntity.State state, String msg) {
-        entity.state = state;
-        DLog.d("http request error " + " msg:" + msg + " id=" + entity.id);
+    public synchronized void onConnectError(String msg) {
+        entry.state = DownloadEntry.State.error;
+        d("onConnectError " + entry.id + " " + msg);
         if (currentRetryIndex < DownloadConfig.getInstance().getMaxRetryCount()) {
-            DLog.d("http request  retry " + currentRetryIndex);
+            d("onConnectError retry " + entry.id + " " + currentRetryIndex);
             currentRetryIndex++;
-            loadDownloadFileSimpleInfo();
-        } else {
-            currentRetryIndex = 0;
-            switch (state) {
-                case paused:
-                    notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_PAUSED);
-                    break;
-                case cancelled:
-                    notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_CANCELLED);
-                    break;
-                case error:
-                    notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ERROR);
-                    break;
-                default:
-                    break;
-            }
+            connect();
+            return;
         }
+        currentRetryIndex = 0;
+        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_COMPLETED);
     }
 
     public synchronized void notifyUpdate(int what) {
-        DownloadDBController.getInstance().addOrUpdate(entity);
-//        将子线程数据 传递给主线程
+        DownloadDBController.getInstance().addOrUpdate(entry);
+//        切换线程
         Message msg = Message.obtain();
         msg.what = what;
-        msg.obj = entity;
+        msg.obj = entry;
         mHandler.sendMessage(msg);
     }
 
     @Override
     public synchronized void onDownloadProgressUpdate(int index, long progress) {
-        entity.currentLength += progress;
-        if (entity.isSupportRange) {
-            entity.ranges.put(index, entity.ranges.get(index) + progress);
+        entry.currentLength += progress;
+        if (entry.isSupportRange && entry.ranges != null) {
+            entry.ranges.put(index, entry.ranges.get(index) + progress);
         }
         if (TickTack.getInstance().needToNotify()) {
-            DLog.d("thread index=" + index + " progress update " + entity.currentLength + " / " + entity.contentLength + " id=" + entity.id);
+            d("thread" + index + " progress " + entry.currentLength + "/" + entry.contentLength + " " + entry.id);
             notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_PROGRESS_UPDATE);
         }
     }
 
     @Override
     public synchronized void onDownloadCompleted(int index) {
-        DLog.d("onDownloadCompleted thread index " + index + " execute completed" + " id " + entity.id);
-        states[index] = DownloadEntity.State.done;
-        for (DownloadEntity.State state : states) {
-            if (state != DownloadEntity.State.done) {
+        d("thread" + index + " onDownloadCompleted " + entry.id);
+        states[index] = DownloadEntry.State.done;
+        for (DownloadEntry.State state : states) {
+            if (state != DownloadEntry.State.done) {
                 return;
             }
         }
-        entity.state = DownloadEntity.State.done;
-        DLog.d("the download task is completed notifyUpdate state " + entity.state.name());
+        entry.state = DownloadEntry.State.done;
         notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_COMPLETED);
     }
 
     @Override
     public synchronized void onDownloadError(int index, String msg) {
-        DLog.d("onDownloadError thread index=" + index + " execute error" + " msg:" + msg + " id " + entity.id);
-        states[index] = DownloadEntity.State.error;
+        d("thread" + index + " onDownloadError " + msg + " " + entry.id);
+        states[index] = DownloadEntry.State.error;
         for (int i = 0; i < states.length; i++) {
-            if (states[i] == DownloadEntity.State.ing) {
-                threads[i].error();
+            if (states[i] == DownloadEntry.State.ing) {
+                threads[i].cancelByError();
             }
         }
         //只有支持断点续传 才能进行重试恢复下载操作
-        if (entity.isSupportRange && currentRetryIndex < DownloadConfig.getInstance().getMaxDownloadTasks()) {
-            DLog.d("thread download error retry " + currentRetryIndex + " id " + entity.id);
+        if (entry.isSupportRange && currentRetryIndex < DownloadConfig.getInstance().getMaxTask()) {
+            d("thread download error retry " + currentRetryIndex + " " + entry.id);
             currentRetryIndex++;
-            loadStartDownload();
+            download();
         } else {
-            if (!entity.isSupportRange) {
+            if (!entry.isSupportRange) {
                 //不支持断点下载 要把缓存文件删掉
-                File file = new File(DownloadFileUtil.getDownloadPath(entity.id));
-                if (file.exists()) {
-                    file.delete();
+                if (destFile.exists()) {
+                    destFile.delete();
                 }
-                entity.reset();
+                entry.reset();
             }
-            entity.state = DownloadEntity.State.error;
-            DLog.d("the download task is error notifyUpdate state " + entity.state.name());
+            entry.state = DownloadEntry.State.error;
             notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ERROR);
         }
     }

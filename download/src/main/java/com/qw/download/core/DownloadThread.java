@@ -2,16 +2,12 @@ package com.qw.download.core;
 
 import com.qw.download.utilities.DLog;
 import com.qw.download.DownloadConfig;
-import com.qw.download.entities.DownloadEntity;
-import com.qw.download.utilities.DownloadFileUtil;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
@@ -20,28 +16,31 @@ import java.net.URL;
  * email:qinwei_it@163.com
  */
 public class DownloadThread implements Runnable {
-    private boolean isSingleThread;
-    private DownloadEntity entity;
-    private int threadIndex;
-    private int start;
-    private int end;
-    private OnDownloadListener listener;
     private boolean isRunning;
-    private DownloadEntity.State state;
+    private boolean isPaused;
+    private boolean isCancelled;
+    private boolean isError;
+    private final boolean isSingleDownload;
+    private final String url;
+    private final File destFile;
+    private final int index;
+    private final int start;
+    private final int end;
+    private OnDownloadListener listener;
 
-    public DownloadThread(DownloadEntity entity, int threadIndex, int start, int end) {
-        this.entity = entity;
-        this.threadIndex = threadIndex;
+    public DownloadThread(String url, File destFile, int threadIndex, int start, int end, OnDownloadListener listener) {
+        this.url = url;
+        this.destFile = destFile;
+        this.index = threadIndex;
         this.start = start;
         this.end = end;
-        DLog.d("DownloadThread " + " threadIndex " + threadIndex + " start-end:" + start + "_" + end);
-    }
-
-    public DownloadThread(DownloadEntity entity) {
-        this.entity = entity;
-        threadIndex = 0;
-        isSingleThread = true;
-        DLog.d("DownloadThread");
+        if (start == 0 && end == 0) {
+            isSingleDownload = true;
+        } else {
+            isSingleDownload = false;
+        }
+        this.listener = listener;
+        DLog.d("DownloadThread threadIndex " + threadIndex + " start-end:" + start + "_" + end);
     }
 
     public boolean isRunning() {
@@ -50,34 +49,104 @@ public class DownloadThread implements Runnable {
 
     public void pause() {
         listener = null;
-        state = DownloadEntity.State.paused;
         isRunning = false;
-        DLog.d("pause interrupt threadIndex " + threadIndex + " id " + entity.id);
+        isPaused = true;
     }
 
     public void cancel() {
         listener = null;
-        state = DownloadEntity.State.cancelled;
         isRunning = false;
-        DLog.d("cancel interrupt threadIndex " + threadIndex + " id " + entity.id);
+        isCancelled = true;
     }
 
-    public void error() {
-        state = DownloadEntity.State.error;
+    public void cancelByError() {
+        listener = null;
         isRunning = false;
-        DLog.d("error interrupt threadIndex " + threadIndex + " id " + entity.id);
+        isError = true;
     }
 
-    private boolean isPause() {
-        return state == DownloadEntity.State.paused;
+    private boolean isPaused() {
+        return isPaused;
     }
 
     private boolean isCancelled() {
-        return state == DownloadEntity.State.cancelled;
+        return isCancelled;
     }
 
-    public boolean isError() {
-        return state == DownloadEntity.State.error;
+    private boolean isError() {
+        return isError;
+    }
+
+
+    @Override
+    public void run() {
+        isRunning = true;
+        HttpURLConnection connection = null;
+        //记录错误信息
+        String msg = "";
+        try {
+            connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(DownloadConfig.getInstance().getConnectTimeout());
+            connection.setReadTimeout(DownloadConfig.getInstance().getReadTimeout());
+            if (!isSingleDownload) {
+                connection.setRequestProperty("Range", "bytes=" + start + "-" + end);
+            }
+            InputStream is;
+            int code = connection.getResponseCode();
+            if (code == HttpURLConnection.HTTP_PARTIAL) {
+                RandomAccessFile raf = new RandomAccessFile(destFile, "rw");
+                raf.seek(start);
+                is = connection.getInputStream();
+                byte[] buffer = new byte[2048];
+                int len;
+                while ((len = is.read(buffer)) != -1) {
+                    if (isPaused() || isCancelled() || isError()) {
+                        break;
+                    }
+                    raf.write(buffer, 0, len);
+                    if (listener != null) {
+                        listener.onDownloadProgressUpdate(index, len);
+                    }
+                }
+                is.close();
+                raf.close();
+            } else if (code == HttpURLConnection.HTTP_OK) {
+                FileOutputStream fos = new FileOutputStream(destFile);
+                is = connection.getInputStream();
+                byte[] buffer = new byte[2048];
+                int len;
+                while ((len = is.read(buffer)) != -1) {
+                    if (isPaused() || isCancelled() || isError()) {
+                        break;
+                    }
+                    fos.write(buffer, 0, len);
+                    if (listener != null) {
+                        listener.onDownloadProgressUpdate(index, len);
+                    }
+                }
+                is.close();
+                fos.close();
+            } else {
+                isError = true;
+                msg = "server error code " + code;
+            }
+        } catch (Exception e) {
+            isError = true;
+            msg = e.getMessage();
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+            if (listener != null) {
+                if (isError) {
+                    listener.onDownloadError(index, msg);
+                } else if (isRunning) {
+                    isRunning = false;
+                    listener.onDownloadCompleted(index);
+                }
+            }
+        }
     }
 
     public interface OnDownloadListener {
@@ -86,90 +155,5 @@ public class DownloadThread implements Runnable {
         void onDownloadCompleted(int index);
 
         void onDownloadError(int index, String msg);
-    }
-
-    public void setOnDownloadListener(OnDownloadListener listener) {
-        this.listener = listener;
-    }
-
-    @Override
-    public void run() {
-        isRunning = true;
-        HttpURLConnection connection;
-        try {
-            state = DownloadEntity.State.ing;
-            connection = (HttpURLConnection) new URL(entity.url).openConnection();
-            connection.setRequestMethod("GET");
-            connection.setConnectTimeout(DownloadConfig.getInstance().getConnectTimeOut());
-            connection.setReadTimeout(DownloadConfig.getInstance().getReadTimeOut());
-            if (!isSingleThread) {
-                connection.setRequestProperty("Range", "bytes=" + start + "-" + end);
-            }
-            InputStream is;
-            int code = connection.getResponseCode();
-            if (code == HttpURLConnection.HTTP_PARTIAL) {
-                RandomAccessFile raf = new RandomAccessFile(DownloadFileUtil.getDownloadPath(entity.id), "rw");
-                raf.seek(start);
-                is = connection.getInputStream();
-                byte[] buffer = new byte[2048];
-                int len;
-                while ((len = is.read(buffer)) != -1) {
-                    if (isPause() || isCancelled() || isError() || !isRunning) {
-                        break;
-                    }
-                    raf.write(buffer, 0, len);
-                    if (listener != null)
-                        listener.onDownloadProgressUpdate(threadIndex, len);
-                }
-                is.close();
-                raf.close();
-            } else if (code == HttpURLConnection.HTTP_OK) {
-                FileOutputStream fos = new FileOutputStream(DownloadFileUtil.getDownloadPath(entity.id));
-                is = connection.getInputStream();
-                byte[] buffer = new byte[2048];
-                int len;
-                while ((len = is.read(buffer)) != -1) {
-                    if (isPause() || isCancelled() || isError() || !isRunning) {
-                        break;
-                    }
-                    fos.write(buffer, 0, len);
-                    if (listener != null)
-                        listener.onDownloadProgressUpdate(threadIndex, len);
-                }
-                is.close();
-                fos.close();
-            } else {
-                state = DownloadEntity.State.error;
-                if (listener != null) {
-                    listener.onDownloadError(threadIndex, "server error code " + code);
-                }
-                return;
-            }
-            switch (state) {
-                case paused:
-                case cancelled:
-                    break;
-                case error:
-                    if (listener != null) {
-                        listener.onDownloadError(threadIndex, "inner interrupt error ");
-                    }
-                    break;
-                default:
-                    state = DownloadEntity.State.done;
-                    if (listener != null) {
-                        listener.onDownloadCompleted(threadIndex);
-                    }
-                    break;
-            }
-        } catch (MalformedURLException e) {
-            if (listener != null)
-                listener.onDownloadError(threadIndex, e.getMessage());
-        } catch (IOException e) {
-            if (listener != null) {
-                listener.onDownloadError(threadIndex, e.getMessage());
-            }
-        } finally {
-            isRunning = false;
-        }
     }
 }

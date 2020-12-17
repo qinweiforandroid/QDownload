@@ -40,7 +40,6 @@ public class HomeActivity extends BaseActivity {
     protected void initializeData(Bundle savedInstanceState) {
         setTitle("QDownload示例");
         //初始化下载服务
-        DownloadManager.getInstance(this);
         mHomeDownloadDirPathLabel.setText("下载文件夹路径:" + DownloadConfig.getInstance().getDownloadDir());
     }
 

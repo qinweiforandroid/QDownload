@@ -6,9 +6,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.qw.download.entities.DownloadEntry;
+import com.qw.download.DownloadEntry;
 import com.qw.download.DownloadManager;
-import com.qw.download.notify.DownloadWatcher;
+import com.qw.download.DownloadWatcher;
 import com.qw.example.core.BaseActivity;
 
 /**
@@ -22,7 +22,7 @@ public class SingleDownloadActivity extends BaseActivity implements View.OnClick
     private Button mSingleDownloadStopBtn;
     private DownloadWatcher watcher = new DownloadWatcher() {
         @Override
-        protected void onDataChanged(DownloadEntry e) {
+        protected void onChanged(DownloadEntry e) {
             if (entity != null) {
                 if (!e.equals(entity)) return;
                 mSingleDownloadInfoLabel.setText(e.toString());
@@ -64,12 +64,12 @@ public class SingleDownloadActivity extends BaseActivity implements View.OnClick
             case R.id.mSingleDownloadAddBtn:
                 mSingleDownloadAddBtn.setEnabled(false);
                 mSingleDownloadStopBtn.setEnabled(true);
-                DownloadManager.getInstance(getApplicationContext()).addDownload(entity);
+                DownloadManager.getInstance().add(entity);
                 break;
             case R.id.mSingleDownloadPauseBtn:
                 mSingleDownloadAddBtn.setEnabled(true);
                 mSingleDownloadStopBtn.setEnabled(false);
-                DownloadManager.getInstance(getApplicationContext()).pauseDownload(entity);
+                DownloadManager.getInstance().pause(entity);
                 break;
             default:
                 break;
@@ -79,12 +79,12 @@ public class SingleDownloadActivity extends BaseActivity implements View.OnClick
     @Override
     protected void onResume() {
         super.onResume();
-        DownloadManager.getInstance(this).addObserver(watcher);
+        DownloadManager.getInstance().addObserver(watcher);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        DownloadManager.getInstance(this).removeObserver(watcher);
+        DownloadManager.getInstance().removeObserver(watcher);
     }
 }

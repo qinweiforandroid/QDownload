@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.qw.download.entities.DownloadEntry;
+import com.qw.download.DownloadEntry;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,7 +17,6 @@ import java.util.HashMap;
  * email:qinwei_it@163.com
  */
 public class DownloadDBController {
-    private static final String TAG = "DownloadDBController";
     private static DownloadDBController mInstance;
     private Gson gson;
     private DownloadDBHelper dbHelper;
@@ -55,24 +54,24 @@ public class DownloadDBController {
         return number > 0;
     }
 
-    public boolean update(DownloadEntry e) {
+    public boolean update(DownloadEntry d) {
         ContentValues value = new ContentValues();
-        value.put("id", e.id);
-        value.put("url", e.url);
-        value.put("contentLength", e.contentLength);
-        value.put("currentLength", e.currentLength);
-        value.put("state", e.state.name());
-        value.put("ranges", gson.toJson(e.ranges));
-        value.put("isSupportRange", e.isSupportRange ? 0 : 1);
-        long number = getDB().update("DB_DOWNLOAD", value, " id=?", new String[]{e.id});
+        value.put("id", d.id);
+        value.put("url", d.url);
+        value.put("contentLength", d.contentLength);
+        value.put("currentLength", d.currentLength);
+        value.put("state", d.state.name());
+        value.put("ranges", gson.toJson(d.ranges));
+        value.put("isSupportRange", d.isSupportRange ? 0 : 1);
+        long number = getDB().update("DB_DOWNLOAD", value, " id=?", new String[]{d.id});
         return number > 0;
     }
 
-    public synchronized boolean addOrUpdate(DownloadEntry e) {
-        if (exists(e.id)) {
-            return update(e);
+    public synchronized boolean newOrUpdate(DownloadEntry d) {
+        if (exists(d.id)) {
+            return update(d);
         } else {
-            return add(e);
+            return add(d);
         }
     }
 
@@ -89,7 +88,7 @@ public class DownloadDBController {
             e.currentLength = cursor.getInt(cursor.getColumnIndex("currentLength"));
             e.ranges = gson.fromJson(cursor.getString(cursor.getColumnIndex("ranges")), new TypeToken<HashMap<Integer, Long>>() {
             }.getType());
-            e.isSupportRange = cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0 ? true : false;
+            e.isSupportRange = cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0;
             e.state = Enum.valueOf(DownloadEntry.State.class, cursor.getString(cursor.getColumnIndex("state")));
         }
         cursor.close();
@@ -98,7 +97,7 @@ public class DownloadDBController {
 
     public boolean exists(String id) {
         Cursor cursor = getDB().rawQuery("SELECT * from DB_DOWNLOAD WHERE id=?", new String[]{id});
-        while (cursor.moveToNext()) {
+        if (cursor.moveToNext()) {
             cursor.close();
             return true;
         }
@@ -118,7 +117,7 @@ public class DownloadDBController {
             e.currentLength = cursor.getInt(cursor.getColumnIndex("currentLength"));
             e.ranges = gson.fromJson(cursor.getString(cursor.getColumnIndex("ranges")), new TypeToken<HashMap<Integer, Long>>() {
             }.getType());
-            e.isSupportRange = cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0 ? true : false;
+            e.isSupportRange = cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0;
             e.state = Enum.valueOf(DownloadEntry.State.class, cursor.getString(cursor.getColumnIndex("state")));
             es.add(e);
         }

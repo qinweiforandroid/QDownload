@@ -1,8 +1,5 @@
-package com.qw.download.notify;
+package com.qw.download;
 
-import android.content.Context;
-
-import com.qw.download.entities.DownloadEntry;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -13,23 +10,21 @@ import java.util.Observable;
  * Created by qinwei on 2016/4/14 16:06
  * email:qinwei_it@163.com
  */
-public class DownloadChanger extends Observable {
+class DownloadChanger extends Observable {
     private static DownloadChanger mInstance;
-    private Context context;
     /**
      * 用于暂停恢复下载缓存
      */
     private LinkedHashMap<String, DownloadEntry> mOperationTasks;
 
-    public DownloadChanger(Context context) {
-        this.context = context;
+    public DownloadChanger() {
         mOperationTasks = new LinkedHashMap<>();
     }
 
-    public static DownloadChanger getInstance(Context context) {
+    public static DownloadChanger getInstance() {
         synchronized (DownloadChanger.class) {
             if (mInstance == null) {
-                mInstance = new DownloadChanger(context);
+                mInstance = new DownloadChanger();
             }
             return mInstance;
         }
@@ -49,13 +44,13 @@ public class DownloadChanger extends Observable {
         return mOperationTasks.get(id);
     }
 
-    public void init(ArrayList<DownloadEntry> es) {
-        for (int i = 0; i < es.size(); i++) {
-            addOperationTasks(es.get(i));
+    public void init(ArrayList<DownloadEntry> list) {
+        for (int i = 0; i < list.size(); i++) {
+            addOperationTasks(list.get(i));
         }
     }
 
-    public void deleteOperationTasks(DownloadEntry entity) {
-        mOperationTasks.remove(entity.id);
+    public void deleteOperationTasks(DownloadEntry d) {
+        mOperationTasks.remove(d.id);
     }
 }

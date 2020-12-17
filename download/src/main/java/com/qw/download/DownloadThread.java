@@ -1,4 +1,4 @@
-package com.qw.download.core;
+package com.qw.download;
 
 import com.qw.download.utilities.DLog;
 import com.qw.download.DownloadConfig;
@@ -15,7 +15,7 @@ import java.net.URL;
  * Created by qinwei on 2016/4/14 16:04
  * email:qinwei_it@163.com
  */
-public class DownloadThread implements Runnable {
+class DownloadThread implements Runnable {
     private boolean isRunning;
     private boolean isPaused;
     private boolean isCancelled;

@@ -1,6 +1,5 @@
-package com.qw.download.core;
+package com.qw.download;
 
-import com.qw.download.DownloadConfig;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;

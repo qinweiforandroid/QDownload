@@ -16,10 +16,9 @@ import android.widget.TextView;
 import androidx.core.content.FileProvider;
 
 import com.qw.download.DownloadConfig;
-import com.qw.download.entities.DownloadEntry;
-import com.qw.download.utilities.FileUtilities;
+import com.qw.download.DownloadEntry;
 import com.qw.download.DownloadManager;
-import com.qw.download.notify.DownloadWatcher;
+import com.qw.download.DownloadWatcher;
 import com.qw.example.core.BaseActivity;
 
 import java.io.File;
@@ -35,7 +34,7 @@ public class MultithreadDownloadListActivity extends BaseActivity {
     private DownloadAdapter adapter;
     private DownloadWatcher watcher = new DownloadWatcher() {
         @Override
-        protected void onDataChanged(DownloadEntry e) {
+        protected void onChanged(DownloadEntry e) {
             if (e.state == DownloadEntry.State.cancelled) {
                 datas.remove(e);
             }
@@ -102,7 +101,7 @@ public class MultithreadDownloadListActivity extends BaseActivity {
     class Holder implements View.OnClickListener {
         private TextView mDownloadItemInfoLabel;
         private Button mDownloadItemOperationBtn;
-        private DownloadEntry e;
+        private DownloadEntry d;
 
         public void initializeView(View v) {
             mDownloadItemInfoLabel = (TextView) v.findViewById(R.id.mDownloadItemInfoLabel);
@@ -111,13 +110,14 @@ public class MultithreadDownloadListActivity extends BaseActivity {
         }
 
         public void initializeData(int position) {
-            e = datas.get(position);
-            DownloadEntry cache = DownloadManager.getInstance(getApplicationContext()).findById(e.id);
+            d = datas.get(position);
+            DownloadEntry cache = DownloadManager.getInstance().findById(d.id);
             if (cache != null) {
-                e = cache;
+                d = cache;
             }
-            mDownloadItemInfoLabel.setText(e.toString());
-            switch (e.state) {
+            mDownloadItemInfoLabel.setText(d.toString());
+            mDownloadItemOperationBtn.setText(DownloadManager.getInstance().getText(d.state));
+            switch (d.state) {
                 case paused:
                     mDownloadItemOperationBtn.setText("继续");
                     break;
@@ -145,23 +145,23 @@ public class MultithreadDownloadListActivity extends BaseActivity {
 
         @Override
         public void onClick(View v) {
-            switch (e.state) {
+            switch (d.state) {
                 case paused:
                 case error:
-                    DownloadManager.getInstance(getApplicationContext()).resumeDownload(e);
+                    DownloadManager.getInstance().resume(d);
                     break;
                 case ing:
                 case wait:
                 case connect:
                     mDownloadItemOperationBtn.setText("暂停");
-                    DownloadManager.getInstance(getApplicationContext()).pauseDownload(e);
+                    DownloadManager.getInstance().pause(d);
                     break;
                 case cancelled:
                 case idle:
-                    DownloadManager.getInstance(getApplicationContext()).addDownload(e);
+                    DownloadManager.getInstance().add(d);
                     break;
                 case done:
-                    File apkFile = DownloadConfig.getInstance().getDownloadFile(e.url);
+                    File apkFile = DownloadConfig.getInstance().getDownloadFile(d.url);
                     if (!apkFile.exists()) {
                         return;
                     }
@@ -194,13 +194,13 @@ public class MultithreadDownloadListActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        DownloadManager.getInstance(this).addObserver(watcher);
+        DownloadManager.getInstance().addObserver(watcher);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        DownloadManager.getInstance(this).removeObserver(watcher);
+        DownloadManager.getInstance().removeObserver(watcher);
     }
 
 }

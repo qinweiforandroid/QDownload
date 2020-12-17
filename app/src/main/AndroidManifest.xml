@@ -33,8 +33,6 @@
             android:name=".SingleDownloadActivity"
             android:screenOrientation="portrait" />
 
-        <service android:name="com.qw.download.core.DownloadService" />
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.qw.example.fileprovider"

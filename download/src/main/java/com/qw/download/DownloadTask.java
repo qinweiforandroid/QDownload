@@ -1,11 +1,9 @@
-package com.qw.download.core;
+package com.qw.download;
 
 import android.os.Handler;
 import android.os.Message;
 
-import com.qw.download.DownloadConfig;
 import com.qw.download.db.DownloadDBController;
-import com.qw.download.entities.DownloadEntry;
 import com.qw.download.utilities.DLog;
 import com.qw.download.utilities.TickTack;
 
@@ -18,7 +16,7 @@ import java.util.concurrent.ExecutorService;
  * Created by qinwei on 2016/4/14 16:04
  * email:qinwei_it@163.com
  */
-public class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThread.OnDownloadListener {
+class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThread.OnDownloadListener {
     private final static String TAG = "Task";
     private ExecutorService mExecutors;
     private final Handler mHandler;
@@ -51,7 +49,7 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
         connectThread = new ConnectThread(entry.url, this);
         entry.state = DownloadEntry.State.connect;
         mExecutors.execute(connectThread);
-        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_CONNECTING);
+        notifyUpdate(DownloadService.NOTIFY_CONNECTING);
     }
 
     private void d(String msg) {
@@ -75,7 +73,7 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
             }
         }
         entry.state = DownloadEntry.State.paused;
-        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_PAUSED);
+        notifyUpdate(DownloadService.NOTIFY_PAUSED);
     }
 
     public void cancel() {
@@ -96,13 +94,13 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
         }
         entry.state = DownloadEntry.State.cancelled;
         entry.reset();
-        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_CANCELLED);
+        notifyUpdate(DownloadService.NOTIFY_CANCELLED);
     }
 
     private void download() {
         d("download " + entry.id);
         entry.state = DownloadEntry.State.ing;
-        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ING);
+        notifyUpdate(DownloadService.NOTIFY_ING);
         if (entry.isSupportRange) {
             multithreadingDownload();
         } else {
@@ -148,9 +146,16 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
         states[0] = DownloadEntry.State.ing;
         entry.state = DownloadEntry.State.ing;
         mExecutors.execute(threads[0]);
-        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ING);
+        notifyUpdate(DownloadService.NOTIFY_ING);
     }
 
+    public synchronized void notifyUpdate(int what) {
+        DownloadDBController.getInstance().newOrUpdate(entry);
+        Message msg = Message.obtain();
+        msg.what = what;
+        msg.obj = entry;
+        mHandler.sendMessageDelayed(msg, 20);
+    }
 
     @Override
     public synchronized void onConnectCompleted(long contentLength, boolean isSupportRange) {
@@ -171,16 +176,7 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
             return;
         }
         currentRetryIndex = 0;
-        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_COMPLETED);
-    }
-
-    public synchronized void notifyUpdate(int what) {
-        DownloadDBController.getInstance().addOrUpdate(entry);
-//        切换线程
-        Message msg = Message.obtain();
-        msg.what = what;
-        msg.obj = entry;
-        mHandler.sendMessage(msg);
+        notifyUpdate(DownloadService.NOTIFY_COMPLETED);
     }
 
     @Override
@@ -191,7 +187,7 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
         }
         if (TickTack.getInstance().needToNotify()) {
             d("thread" + index + " progress " + entry.currentLength + "/" + entry.contentLength + " " + entry.id);
-            notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_PROGRESS_UPDATE);
+            notifyUpdate(DownloadService.NOTIFY_PROGRESS_UPDATE);
         }
     }
 
@@ -205,7 +201,7 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
             }
         }
         entry.state = DownloadEntry.State.done;
-        notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_COMPLETED);
+        notifyUpdate(DownloadService.NOTIFY_COMPLETED);
     }
 
     @Override
@@ -231,7 +227,7 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
                 entry.reset();
             }
             entry.state = DownloadEntry.State.error;
-            notifyUpdate(DownloadService.NOTIFY_DOWNLOAD_ERROR);
+            notifyUpdate(DownloadService.NOTIFY_ERROR);
         }
     }
 }

@@ -9,7 +9,6 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.qw.download.DownloadConfig;
-import com.qw.download.DownloadManager;
 import com.qw.example.core.BaseActivity;
 import com.qw.example.utils.PermissionHelper;
 
@@ -49,7 +48,7 @@ public class HomeActivity extends BaseActivity {
     }
 
 
-    public void goMultithreadList(View v) {
+    public void goMultithreadDownloadListActivity(View v) {
         Intent intent = new Intent(this, MultithreadDownloadListActivity.class);
         startActivity(intent);
     }

@@ -18,6 +18,7 @@ public class DownloadConfig {
     private int connect_timeout;
     private int read_timeout;
     private String downloadDir;
+    private boolean autoResume;
 
     public synchronized static DownloadConfig getInstance() {
         if (mInstance == null) {
@@ -63,12 +64,16 @@ public class DownloadConfig {
         return downloadDir;
     }
 
+    public boolean isAutoResume() {
+        return autoResume;
+    }
     public static class Builder {
         private int max_tasks = 3;
         private int max_threads = 2;
         private int max_retry_count = 3;
         private int connect_timeout = 10 * 1000;
         private int read_timeout = 10 * 1000;
+        private boolean autoResume;
         private String downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath();
 
         public Builder setMaxTask(int count) {
@@ -96,6 +101,11 @@ public class DownloadConfig {
             return this;
         }
 
+        public Builder setAutoResume(boolean autoResume) {
+            this.autoResume = autoResume;
+            return this;
+        }
+
         public void setDownloadDir(String downloadDir) {
             this.downloadDir = downloadDir;
         }
@@ -108,7 +118,10 @@ public class DownloadConfig {
             config.connect_timeout = connect_timeout;
             config.read_timeout = read_timeout;
             config.downloadDir = downloadDir;
+            config.autoResume=autoResume;
             return config;
         }
     }
+
+
 }

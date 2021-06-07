@@ -15,10 +15,10 @@ class DownloadChanger extends Observable {
     /**
      * 用于暂停恢复下载缓存
      */
-    private LinkedHashMap<String, DownloadEntry> mOperationTasks;
+    private LinkedHashMap<String, DownloadEntry> mDownloadEntries;
 
     public DownloadChanger() {
-        mOperationTasks = new LinkedHashMap<>();
+        mDownloadEntries = new LinkedHashMap<>();
     }
 
     public static DownloadChanger getInstance() {
@@ -31,26 +31,30 @@ class DownloadChanger extends Observable {
     }
 
     public void notifyDataChanged(DownloadEntry entity) {
-        mOperationTasks.put(entity.id, entity);
+        mDownloadEntries.put(entity.id, entity);
         setChanged();
         notifyObservers(entity);
     }
 
     public void addOperationTasks(DownloadEntry entity) {
-        mOperationTasks.put(entity.id, entity);
+        mDownloadEntries.put(entity.id, entity);
     }
 
-    public DownloadEntry findById(String id) {
-        return mOperationTasks.get(id);
+    public DownloadEntry get(String id) {
+        return mDownloadEntries.get(id);
     }
 
-    public void init(ArrayList<DownloadEntry> list) {
+    public void setDownloadEntries(ArrayList<DownloadEntry> list) {
         for (int i = 0; i < list.size(); i++) {
             addOperationTasks(list.get(i));
         }
     }
 
+    public LinkedHashMap<String, DownloadEntry> getDownloadEntries() {
+        return mDownloadEntries;
+    }
+
     public void deleteOperationTasks(DownloadEntry d) {
-        mOperationTasks.remove(d.id);
+        mDownloadEntries.remove(d.id);
     }
 }

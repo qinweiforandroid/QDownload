@@ -1,7 +1,6 @@
 package com.qw.example;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -26,7 +25,6 @@ public class SingleDownloadActivity extends BaseActivity implements View.OnClick
             if (entity != null) {
                 if (!e.equals(entity)) return;
                 mSingleDownloadInfoLabel.setText(e.toString());
-                Log.e("Multithread", e.toString());
             }
         }
     };
@@ -64,12 +62,12 @@ public class SingleDownloadActivity extends BaseActivity implements View.OnClick
             case R.id.mSingleDownloadAddBtn:
                 mSingleDownloadAddBtn.setEnabled(false);
                 mSingleDownloadStopBtn.setEnabled(true);
-                DownloadManager.getInstance().add(entity);
+                DownloadManager.add(entity);
                 break;
             case R.id.mSingleDownloadPauseBtn:
                 mSingleDownloadAddBtn.setEnabled(true);
                 mSingleDownloadStopBtn.setEnabled(false);
-                DownloadManager.getInstance().pause(entity);
+                DownloadManager.pause(entity);
                 break;
             default:
                 break;
@@ -79,12 +77,12 @@ public class SingleDownloadActivity extends BaseActivity implements View.OnClick
     @Override
     protected void onResume() {
         super.onResume();
-        DownloadManager.getInstance().addObserver(watcher);
+        DownloadManager.addObserver(watcher);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        DownloadManager.getInstance().removeObserver(watcher);
+        DownloadManager.removeObserver(watcher);
     }
 }

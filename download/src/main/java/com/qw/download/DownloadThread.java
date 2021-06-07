@@ -40,7 +40,11 @@ class DownloadThread implements Runnable {
             isSingleDownload = false;
         }
         this.listener = listener;
-        DLog.d("DownloadThread threadIndex " + threadIndex + " start-end:" + start + "_" + end);
+        d("thread[" + threadIndex + "] start-end:" + start + "/" + end);
+    }
+
+    private void d(String msg) {
+        DLog.d("DownloadThread--> " + msg + " url " + url + " ");
     }
 
     public boolean isRunning() {

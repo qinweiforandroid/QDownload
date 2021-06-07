@@ -35,13 +35,12 @@ public class ConnectThread implements Runnable {
         HttpURLConnection connection = null;
         try {
             connection = (HttpURLConnection) new URL(url).openConnection();
-            connection.setRequestMethod("GET");
+            connection.setRequestMethod("HEAD");
             connection.addRequestProperty("Accept-Ranges", "bytes");
             connection.setConnectTimeout(DownloadConfig.getInstance().getConnectTimeout());
             connection.setReadTimeout(DownloadConfig.getInstance().getReadTimeout());
             boolean isSupportRange;
             int contentLength = connection.getContentLength();
-//            String contentType = connection.getHeaderField("Content-Type");
             int code = connection.getResponseCode();
             if (code >= 200 && code < 300) {
                 String ranges = connection.getHeaderField("Accept-Ranges");
@@ -74,7 +73,7 @@ public class ConnectThread implements Runnable {
         HttpURLConnection connection = null;
         try {
             connection = (HttpURLConnection) new URL(url).openConnection();
-            connection.setRequestMethod("GET");
+            connection.setRequestMethod("HEAD");
             connection.addRequestProperty("Accept-Ranges", "bytes");
             connection.setRequestProperty("Range", "bytes=0-1");
             connection.setConnectTimeout(DownloadConfig.getInstance().getConnectTimeout());

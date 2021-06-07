@@ -3,9 +3,12 @@ package com.qw.download;
 import android.content.Context;
 import android.content.Intent;
 
+import com.qw.download.db.DownloadDBManager;
 import com.qw.download.utilities.DConstants;
+import com.qw.download.utilities.DLog;
 
-import java.io.File;
+import java.util.ArrayList;
+
 
 /**
  * 下载框架总控制器
@@ -17,16 +20,22 @@ public class DownloadManager {
     private static DownloadManager mInstance;
     private final Context context;
 
+
     private DownloadManager(Context context) {
         this.context = context.getApplicationContext();
-        context.startService(new Intent(context, DownloadService.class));
+        DownloadDBManager.init(context);
+        ArrayList<DownloadEntry> entries = DownloadDBManager.getInstance().queryAll();
+        DownloadChanger.getInstance().setDownloadEntries(entries);
     }
 
-    public static DownloadManager getInstance() {
+    private static void checkInit() {
         if (mInstance == null) {
             throw new IllegalArgumentException("downloadManager not init");
         }
-        return mInstance;
+    }
+
+    private static void d(String msg) {
+        DLog.d(TAG + "--> " + msg);
     }
 
     public static void init(Context context) {
@@ -38,11 +47,13 @@ public class DownloadManager {
     /**
      * 开启下载
      */
-    public void add(DownloadEntry entry) {
-        Intent intent = new Intent(context, DownloadService.class);
+    public static void add(DownloadEntry entry) {
+        checkInit();
+        d(entry.id + " add");
+        Intent intent = new Intent(mInstance.context, DownloadService.class);
         intent.putExtra(DConstants.KEY_ENTRY, entry);
         intent.putExtra(DConstants.KEY_ACTION, DConstants.KEY_ACTION_ADD);
-        context.startService(intent);
+        mInstance.context.startService(intent);
     }
 
     /**
@@ -50,11 +61,13 @@ public class DownloadManager {
      *
      * @param entry
      */
-    public void pause(DownloadEntry entry) {
-        Intent intent = new Intent(context, DownloadService.class);
+    public static void pause(DownloadEntry entry) {
+        checkInit();
+        d(entry.id + " pause");
+        Intent intent = new Intent(mInstance.context, DownloadService.class);
         intent.putExtra(DConstants.KEY_ENTRY, entry);
         intent.putExtra(DConstants.KEY_ACTION, DConstants.KEY_ACTION_PAUSE);
-        context.startService(intent);
+        mInstance.context.startService(intent);
     }
 
     /**
@@ -62,11 +75,13 @@ public class DownloadManager {
      *
      * @param entry
      */
-    public void resume(DownloadEntry entry) {
-        Intent intent = new Intent(context, DownloadService.class);
+    public static void resume(DownloadEntry entry) {
+        checkInit();
+        d(entry.id + " resume");
+        Intent intent = new Intent(mInstance.context, DownloadService.class);
         intent.putExtra(DConstants.KEY_ENTRY, entry);
         intent.putExtra(DConstants.KEY_ACTION, DConstants.KEY_ACTION_RESUME);
-        context.startService(intent);
+        mInstance.context.startService(intent);
     }
 
     /**
@@ -74,22 +89,28 @@ public class DownloadManager {
      *
      * @param entry
      */
-    public void cancel(DownloadEntry entry) {
-        Intent intent = new Intent(context, DownloadService.class);
+    public static void cancel(DownloadEntry entry) {
+        checkInit();
+        d(entry.id + " cancel");
+        Intent intent = new Intent(mInstance.context, DownloadService.class);
         intent.putExtra(DConstants.KEY_ENTRY, entry);
         intent.putExtra(DConstants.KEY_ACTION, DConstants.KEY_ACTION_CANCEL);
-        context.startService(intent);
+        mInstance.context.startService(intent);
     }
 
-    public void addObserver(DownloadWatcher watcher) {
+    public static void addObserver(DownloadWatcher watcher) {
+        checkInit();
         DownloadChanger.getInstance().addObserver(watcher);
     }
 
-    public void removeObserver(DownloadWatcher watcher) {
+    public static void removeObserver(DownloadWatcher watcher) {
+        checkInit();
         DownloadChanger.getInstance().deleteObserver(watcher);
     }
 
-    public DownloadEntry findById(String id) {
-        return DownloadChanger.getInstance().findById(id);
+    public static DownloadEntry findById(String id) {
+        checkInit();
+        d(id + " findById");
+        return DownloadChanger.getInstance().get(id);
     }
 }

@@ -17,13 +17,13 @@ public class DownloadEntry implements Serializable {
     public HashMap<Integer, Long> ranges;
 
     public DownloadEntry() {
-        state = State.idle;
+        state = State.IDLE;
     }
 
     public DownloadEntry(String id, String url) {
         this.id = id;
         this.url = url;
-        state = State.idle;
+        state = State.IDLE;
     }
 
     public void reset() {
@@ -35,35 +35,35 @@ public class DownloadEntry implements Serializable {
         /**
          * 空闲
          */
-        idle,
+        IDLE,
         /**
          * 连接中
          */
-        connect,
+        CONNECT,
         /**
          * 下载中
          */
-        ing,
+        ING,
         /**
          * 已暂停
          */
-        paused,
+        PAUSED,
         /**
          * 已取消
          */
-        cancelled,
+        CANCELLED,
         /**
          * 错误
          */
-        error,
+        ERROR,
         /**
          * 完成
          */
-        done,
+        DONE,
         /**
          * 等待
          */
-        wait
+        WAIT
     }
 
     @Override
@@ -79,5 +79,12 @@ public class DownloadEntry implements Serializable {
     @Override
     public boolean equals(Object o) {
         return o.hashCode() == this.hashCode();
+    }
+
+    public boolean isDone(){
+        return state==State.DONE;
+    }
+    public boolean isConnecting(){
+        return state==State.CONNECT;
     }
 }

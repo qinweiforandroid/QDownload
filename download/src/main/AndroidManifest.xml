@@ -6,16 +6,8 @@
         android:allowBackup="true"
         android:label="@string/app_name"
         android:supportsRtl="true">
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
-            android:exported="false"
-            tools:node="merge">
-            <meta-data
-                android:name="com.qw.download.DownloadInitializer"
-                android:value="androidx.startup" />
-        </provider>
-        <service android:name="com.qw.download.DownloadService" />
+        <service
+            android:name="com.qw.download.DownloadService"
+            android:exported="false" />
     </application>
-
 </manifest>

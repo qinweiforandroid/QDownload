@@ -12,6 +12,6 @@ public class DLog {
     public static final String TAG = "QDownload";
 
     public static void d(String msg) {
-        Log.e(TAG, "--> " + msg);
+        Log.e(TAG, "" + msg);
     }
 }

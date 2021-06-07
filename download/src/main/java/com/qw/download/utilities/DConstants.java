@@ -11,6 +11,6 @@ public class DConstants {
     public static final int KEY_ACTION_RESUME = 1;
     public static final int KEY_ACTION_PAUSE = 2;
     public static final int KEY_ACTION_CANCEL = 3;
-    public static final int KEY_ACTION_STOP_ALL = 4;
+    public static final int KEY_ACTION_PAUSE_ALL = 4;
     public static final int KEY_ACTION_RECOVER_ALL = 5;
 }

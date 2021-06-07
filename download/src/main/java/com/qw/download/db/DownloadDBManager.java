@@ -3,7 +3,10 @@ package com.qw.download.db;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseErrorHandler;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -16,23 +19,24 @@ import java.util.HashMap;
  * Created by qinwei on 2016/4/14 16:58
  * email:qinwei_it@163.com
  */
-public class DownloadDBController {
-    private static DownloadDBController mInstance;
+public class DownloadDBManager {
+    private static DownloadDBManager mInstance;
     private Gson gson;
     private DownloadDBHelper dbHelper;
 
-    public DownloadDBController(Context context) {
+
+    public DownloadDBManager(Context context) {
         dbHelper = new DownloadDBHelper(context, "download.db", null, 1);
         gson = new Gson();
     }
 
-    public static DownloadDBController getInstance() {
+    public static DownloadDBManager getInstance() {
         return mInstance;
     }
 
     public static void init(Context context) {
         if (mInstance == null) {
-            mInstance = new DownloadDBController(context);
+            mInstance = new DownloadDBManager(context);
             mInstance.getDB();
         }
     }
@@ -50,7 +54,7 @@ public class DownloadDBController {
         value.put("state", e.state.name());
         value.put("ranges", gson.toJson(e.ranges));
         value.put("isSupportRange", e.isSupportRange ? 0 : 1);
-        long number = getDB().insert("DB_DOWNLOAD", null, value);
+        long number = getDB().insert(DownloadDBHelper.DB_TABLE, null, value);
         return number > 0;
     }
 
@@ -63,7 +67,7 @@ public class DownloadDBController {
         value.put("state", d.state.name());
         value.put("ranges", gson.toJson(d.ranges));
         value.put("isSupportRange", d.isSupportRange ? 0 : 1);
-        long number = getDB().update("DB_DOWNLOAD", value, " id=?", new String[]{d.id});
+        long number = getDB().update(DownloadDBHelper.DB_TABLE, value, " id=?", new String[]{d.id});
         return number > 0;
     }
 
@@ -77,7 +81,7 @@ public class DownloadDBController {
 
     public DownloadEntry findById(String id) {
         DownloadEntry e = null;
-        Cursor cursor = getDB().rawQuery("SELECT * from DB_DOWNLOAD WHERE id=?", new String[]{id});
+        Cursor cursor = getDB().rawQuery("SELECT * from " + DownloadDBHelper.DB_TABLE + " WHERE id=?", new String[]{id});
         while (cursor.moveToNext()) {
             if (e == null) {
                 e = new DownloadEntry();
@@ -96,7 +100,7 @@ public class DownloadDBController {
     }
 
     public boolean exists(String id) {
-        Cursor cursor = getDB().rawQuery("SELECT * from DB_DOWNLOAD WHERE id=?", new String[]{id});
+        Cursor cursor = getDB().rawQuery("SELECT * from " + DownloadDBHelper.DB_TABLE + " WHERE id=?", new String[]{id});
         if (cursor.moveToNext()) {
             cursor.close();
             return true;
@@ -108,7 +112,7 @@ public class DownloadDBController {
     public ArrayList<DownloadEntry> queryAll() {
         ArrayList<DownloadEntry> es = new ArrayList<>();
         DownloadEntry e = null;
-        Cursor cursor = getDB().rawQuery("SELECT * from DB_DOWNLOAD", null);
+        Cursor cursor = getDB().rawQuery("SELECT * from " + DownloadDBHelper.DB_TABLE, null);
         while (cursor.moveToNext()) {
             e = new DownloadEntry();
             e.id = cursor.getString(cursor.getColumnIndex("id"));
@@ -126,7 +130,7 @@ public class DownloadDBController {
     }
 
     public boolean delete(DownloadEntry e) {
-        long number = getDB().delete("DB_DOWNLOAD", "id=?", new String[]{e.id});
+        long number = getDB().delete(DownloadDBHelper.DB_TABLE, "id=?", new String[]{e.id});
         return number > 0;
     }
 
@@ -135,12 +139,46 @@ public class DownloadDBController {
         for (int i = 0; i < es.size(); i++) {
             ids[i] = es.get(i).id;
         }
-        long number = getDB().delete("DB_DOWNLOAD", "id=?", ids);
+        long number = getDB().delete(DownloadDBHelper.DB_TABLE, "id=?", ids);
         return number > 0;
     }
 
     public boolean deleteAll() {
-        long number = getDB().delete("DB_DOWNLOAD", null, null);
+        long number = getDB().delete(DownloadDBHelper.DB_TABLE, null, null);
         return number > 0;
+    }
+
+    public static class DownloadDBHelper extends SQLiteOpenHelper {
+        public final static String DB_TABLE = "tb_download";
+
+        public DownloadDBHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
+            super(context, name, factory, version);
+        }
+
+        public DownloadDBHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version, DatabaseErrorHandler errorHandler) {
+            super(context, name, factory, version, errorHandler);
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            try {
+                db.execSQL("CREATE TABLE " + DB_TABLE + "  (" +
+                        "id  TEXT NOT NULL," +
+                        "url  TEXT," +
+                        "contentLength  INTEGER DEFAULT 0," +
+                        "currentLength  INTEGER DEFAULT 0," +
+                        "state  TEXT," +
+                        "ranges  TEXT," +
+                        "isSupportRange  INTEGER," +
+                        "PRIMARY KEY (id)" + ");");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+        }
     }
 }

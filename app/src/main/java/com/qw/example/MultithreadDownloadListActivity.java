@@ -35,7 +35,7 @@ public class MultithreadDownloadListActivity extends BaseActivity {
     private DownloadWatcher watcher = new DownloadWatcher() {
         @Override
         protected void onChanged(DownloadEntry e) {
-            if (e.state == DownloadEntry.State.cancelled) {
+            if (e.state == DownloadEntry.State.CANCELLED) {
                 datas.remove(e);
             }
             adapter.notifyDataSetChanged();
@@ -111,31 +111,30 @@ public class MultithreadDownloadListActivity extends BaseActivity {
 
         public void initializeData(int position) {
             d = datas.get(position);
-            DownloadEntry cache = DownloadManager.getInstance().findById(d.id);
+            DownloadEntry cache = DownloadManager.findById(d.id);
             if (cache != null) {
                 d = cache;
             }
             mDownloadItemInfoLabel.setText(d.toString());
-            mDownloadItemOperationBtn.setText(DownloadManager.getInstance().getText(d.state));
             switch (d.state) {
-                case paused:
+                case PAUSED:
                     mDownloadItemOperationBtn.setText("继续");
                     break;
-                case wait:
+                case WAIT:
                     mDownloadItemOperationBtn.setText("等待");
                     break;
-                case ing:
-                case connect:
+                case ING:
+                case CONNECT:
                     mDownloadItemOperationBtn.setText("暂停");
                     break;
-                case error:
+                case ERROR:
                     mDownloadItemOperationBtn.setText("重试");
                     break;
-                case cancelled:
-                case idle:
+                case CANCELLED:
+                case IDLE:
                     mDownloadItemOperationBtn.setText("下载");
                     break;
-                case done:
+                case DONE:
                     mDownloadItemOperationBtn.setText("打开");
                     break;
                 default:
@@ -146,21 +145,21 @@ public class MultithreadDownloadListActivity extends BaseActivity {
         @Override
         public void onClick(View v) {
             switch (d.state) {
-                case paused:
-                case error:
-                    DownloadManager.getInstance().resume(d);
+                case PAUSED:
+                case ERROR:
+                    DownloadManager.resume(d);
                     break;
-                case ing:
-                case wait:
-                case connect:
+                case ING:
+                case WAIT:
+                case CONNECT:
                     mDownloadItemOperationBtn.setText("暂停");
-                    DownloadManager.getInstance().pause(d);
+                    DownloadManager.pause(d);
                     break;
-                case cancelled:
-                case idle:
-                    DownloadManager.getInstance().add(d);
+                case CANCELLED:
+                case IDLE:
+                    DownloadManager.add(d);
                     break;
-                case done:
+                case DONE:
                     File apkFile = DownloadConfig.getInstance().getDownloadFile(d.url);
                     if (!apkFile.exists()) {
                         return;
@@ -194,13 +193,13 @@ public class MultithreadDownloadListActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        DownloadManager.getInstance().addObserver(watcher);
+        DownloadManager.addObserver(watcher);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        DownloadManager.getInstance().removeObserver(watcher);
+        DownloadManager.removeObserver(watcher);
     }
 
 }

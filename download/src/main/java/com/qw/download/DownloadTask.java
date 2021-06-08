@@ -178,7 +178,7 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
             return;
         }
         currentRetryIndex = 0;
-        notifyUpdate(DownloadService.NOTIFY_COMPLETED);
+        notifyUpdate(DownloadService.NOTIFY_ERROR);
     }
 
     @Override

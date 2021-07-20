@@ -23,7 +23,7 @@ public class DownloadManager {
 
     private DownloadManager(Context context) {
         this.context = context.getApplicationContext();
-        DownloadDBManager.init(context);
+        DownloadDBManager.init(this.context);
         ArrayList<DownloadEntry> entries = DownloadDBManager.getInstance().queryAll();
         DownloadChanger.getInstance().setDownloadEntries(entries);
     }

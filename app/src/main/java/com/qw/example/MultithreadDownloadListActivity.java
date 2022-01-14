@@ -181,7 +181,7 @@ public class MultithreadDownloadListActivity extends BaseActivity {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (Build.VERSION.SDK_INT >= 24) {
-            Uri apkUri = FileProvider.getUriForFile(context, "com.qw.example.fileprovider", file);
+            Uri apkUri = FileProvider.getUriForFile(context, "com.qw.download.fileprovider", file);
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
         } else {

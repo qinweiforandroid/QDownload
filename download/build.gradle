@@ -1,13 +1,11 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 31
 
     defaultConfig {
-        minSdkVersion 15
-        targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
+        minSdkVersion 16
+        targetSdkVersion 31
     }
     buildTypes {
         release {
@@ -15,26 +13,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    task makeJar(type: Copy) {
-        //删除存在的
-        delete 'build/libs/download.jar'
-        //设置拷贝的文件
-        from('build/intermediates/intermediate-jars/release/')
-        //打进jar包后的文件目录
-        into('build/')
-        //将classes.jar放入build/libs/目录下
-        //include ,exclude参数来设置过滤
-        //（我们只关心classes.jar这个文件）
-        include('classes.jar')
-        //重命名
-        rename('classes.jar', 'download.jar')
-    }
-    makeJar.dependsOn(build)
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    testImplementation 'junit:junit:4.13.1'
-    api 'com.google.code.gson:gson:2.8.6'
+    testImplementation 'junit:junit:4.13.2'
+    api 'com.google.code.gson:gson:2.8.8'
 }
-apply from: 'bintray.gradle'
+apply from: '../nexus.gradle'

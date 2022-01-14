@@ -19,6 +19,7 @@
         tools:ignore="GoogleAppIndexingWarning">
         <activity
             android:name=".HomeActivity"
+            android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -29,14 +30,16 @@
 
         <activity
             android:name=".MultithreadDownloadListActivity"
+            android:exported="true"
             android:screenOrientation="portrait" />
         <activity
             android:name=".SingleDownloadActivity"
+            android:exported="true"
             android:screenOrientation="portrait" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.qw.example.fileprovider"
+            android:authorities="com.qw.download.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

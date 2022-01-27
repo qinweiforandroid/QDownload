@@ -144,6 +144,7 @@ public class MultithreadDownloadListActivity extends BaseActivity {
     }
 
     class Holder implements View.OnClickListener {
+        private TextView mDownloadTitleLabel;
         private TextView mDownloadProgressDesLabel;
         private TextView mDownloadStateLabel;
         private TextView mDownloadLabel;
@@ -152,6 +153,7 @@ public class MultithreadDownloadListActivity extends BaseActivity {
         private ApkEntry d;
 
         public void initializeView(View v) {
+            mDownloadTitleLabel = (TextView) v.findViewById(R.id.mDownloadTitleLabel);
             mDownloadProgressDesLabel = (TextView) v.findViewById(R.id.mDownloadProgressDesLabel);
             mDownloadProgress = (QProgress) v.findViewById(R.id.mDownloadProgress);
             mDownloadLabel = (TextView) v.findViewById(R.id.mDownloadLabel);
@@ -162,6 +164,7 @@ public class MultithreadDownloadListActivity extends BaseActivity {
 
         public void initializeData(int position) {
             d = modules.get(position);
+            mDownloadTitleLabel.setText(d.name);
             mDownloadStateLabel.setText("");
             mDownloadProgressDesLabel.setText("");
             Glide.with(MultithreadDownloadListActivity.this)

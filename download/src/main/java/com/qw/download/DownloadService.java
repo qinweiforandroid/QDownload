@@ -11,6 +11,7 @@ import com.qw.download.db.DownloadDBManager;
 import com.qw.download.utilities.DConstants;
 import com.qw.download.utilities.DLog;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -157,9 +158,15 @@ public class DownloadService extends Service {
 
 
     private void start(DownloadEntry entry) {
+        File destFile = DownloadConfig.getInstance().getDownloadFile(entry.url);
+        //check 已下载文件被误删数据恢复初始状态
+        if (!destFile.exists() && entry.currentLength > 0) {
+            entry.reset();
+        }
         if (entry.isDone()) {
             return;
         }
+
         d(entry.id + " start");
         DownloadTask task = new DownloadTask(entry, mExecutors, handler);
         mTasks.put(entry.id, task);

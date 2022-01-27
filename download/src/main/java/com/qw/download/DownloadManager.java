@@ -126,7 +126,10 @@ public class DownloadManager {
 
     public static DownloadEntry findById(String id) {
         checkInit();
-        d(id + " findById");
-        return DownloadChanger.getInstance().get(id);
+        DownloadEntry entry = DownloadChanger.getInstance().get(id);
+        if (entry != null) {
+            d("findById " + entry.toString());
+        }
+        return entry;
     }
 }

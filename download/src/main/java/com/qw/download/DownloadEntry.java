@@ -28,6 +28,8 @@ public class DownloadEntry implements Serializable {
     }
 
     public void reset() {
+        state = State.IDLE;
+        speed = 0;
         currentLength = 0;
         ranges = null;
     }

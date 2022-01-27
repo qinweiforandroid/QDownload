@@ -21,7 +21,7 @@ public class TickTack {
 
     public synchronized boolean needToNotify() {
         long stamp = System.currentTimeMillis();
-        if (stamp - mLastStamp > 1000) {
+        if (stamp - mLastStamp > 800) {
             mLastStamp = stamp;
             return true;
         }

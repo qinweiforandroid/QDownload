@@ -70,6 +70,14 @@ public class DownloadManager {
         mInstance.context.startService(intent);
     }
 
+    public static void pauseAll() {
+        checkInit();
+        d("pauseAll");
+        Intent intent = new Intent(mInstance.context, DownloadService.class);
+        intent.putExtra(DConstants.KEY_ACTION, DConstants.KEY_ACTION_PAUSE_ALL);
+        mInstance.context.startService(intent);
+    }
+
     /**
      * 恢复下载
      *
@@ -81,6 +89,14 @@ public class DownloadManager {
         Intent intent = new Intent(mInstance.context, DownloadService.class);
         intent.putExtra(DConstants.KEY_ENTRY, entry);
         intent.putExtra(DConstants.KEY_ACTION, DConstants.KEY_ACTION_RESUME);
+        mInstance.context.startService(intent);
+    }
+
+    public static void recoverAll() {
+        checkInit();
+        d("recoverAll");
+        Intent intent = new Intent(mInstance.context, DownloadService.class);
+        intent.putExtra(DConstants.KEY_ACTION, DConstants.KEY_ACTION_RECOVER_ALL);
         mInstance.context.startService(intent);
     }
 

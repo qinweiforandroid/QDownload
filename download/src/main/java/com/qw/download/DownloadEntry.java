@@ -15,6 +15,7 @@ public class DownloadEntry implements Serializable {
     public long currentLength;
     public State state;
     public HashMap<Integer, Long> ranges;
+    public int speed;
 
     public DownloadEntry() {
         state = State.IDLE;
@@ -81,10 +82,11 @@ public class DownloadEntry implements Serializable {
         return o.hashCode() == this.hashCode();
     }
 
-    public boolean isDone(){
-        return state==State.DONE;
+    public boolean isDone() {
+        return state == State.DONE;
     }
-    public boolean isConnecting(){
-        return state==State.CONNECT;
+
+    public boolean isConnecting() {
+        return state == State.CONNECT;
     }
 }

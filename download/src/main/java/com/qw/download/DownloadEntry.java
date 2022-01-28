@@ -1,5 +1,6 @@
 package com.qw.download;
 
+
 import java.io.Serializable;
 import java.util.HashMap;
 
@@ -17,11 +18,11 @@ public class DownloadEntry implements Serializable {
     public HashMap<Integer, Long> ranges;
     public int speed;
 
-    public DownloadEntry() {
-        state = State.IDLE;
+    public static DownloadEntry obtain(String id, String url) {
+        return new DownloadEntry(id, url);
     }
 
-    public DownloadEntry(String id, String url) {
+    private DownloadEntry(String id, String url) {
         this.id = id;
         this.url = url;
         state = State.IDLE;

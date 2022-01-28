@@ -9,6 +9,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.qw.download.DownloadEntry;
 
@@ -79,24 +80,21 @@ public class DownloadDBManager {
         }
     }
 
-    public DownloadEntry findById(String id) {
-        DownloadEntry e = null;
+    public DownloadEntry queryById(String id) {
+        DownloadEntry entry = null;
         Cursor cursor = getDB().rawQuery("SELECT * from " + DownloadDBHelper.DB_TABLE + " WHERE id=?", new String[]{id});
         while (cursor.moveToNext()) {
-            if (e == null) {
-                e = new DownloadEntry();
-            }
-            e.id = cursor.getString(cursor.getColumnIndex("id"));
-            e.url = cursor.getString(cursor.getColumnIndex("url"));
-            e.contentLength = cursor.getInt(cursor.getColumnIndex("contentLength"));
-            e.currentLength = cursor.getInt(cursor.getColumnIndex("currentLength"));
-            e.ranges = gson.fromJson(cursor.getString(cursor.getColumnIndex("ranges")), new TypeToken<HashMap<Integer, Long>>() {
+            entry = DownloadEntry.obtain(cursor.getString(cursor.getColumnIndex("id")),
+                    cursor.getString(cursor.getColumnIndex("url")));
+            entry.contentLength = cursor.getInt(cursor.getColumnIndex("contentLength"));
+            entry.currentLength = cursor.getInt(cursor.getColumnIndex("currentLength"));
+            entry.ranges = gson.fromJson(cursor.getString(cursor.getColumnIndex("ranges")), new TypeToken<HashMap<Integer, Long>>() {
             }.getType());
-            e.isSupportRange = cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0;
-            e.state = Enum.valueOf(DownloadEntry.State.class, cursor.getString(cursor.getColumnIndex("state")));
+            entry.isSupportRange = cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0;
+            entry.state = Enum.valueOf(DownloadEntry.State.class, cursor.getString(cursor.getColumnIndex("state")));
         }
         cursor.close();
-        return e;
+        return entry;
     }
 
     public boolean exists(String id) {
@@ -111,19 +109,20 @@ public class DownloadDBManager {
 
     public ArrayList<DownloadEntry> queryAll() {
         ArrayList<DownloadEntry> es = new ArrayList<>();
-        DownloadEntry e = null;
+        DownloadEntry entry;
         Cursor cursor = getDB().rawQuery("SELECT * from " + DownloadDBHelper.DB_TABLE, null);
         while (cursor.moveToNext()) {
-            e = new DownloadEntry();
-            e.id = cursor.getString(cursor.getColumnIndex("id"));
-            e.url = cursor.getString(cursor.getColumnIndex("url"));
-            e.contentLength = cursor.getInt(cursor.getColumnIndex("contentLength"));
-            e.currentLength = cursor.getInt(cursor.getColumnIndex("currentLength"));
-            e.ranges = gson.fromJson(cursor.getString(cursor.getColumnIndex("ranges")), new TypeToken<HashMap<Integer, Long>>() {
+            entry = DownloadEntry.obtain(cursor.getString(cursor.getColumnIndex("id")),
+                    cursor.getString(cursor.getColumnIndex("url")));
+            entry.id = cursor.getString(cursor.getColumnIndex("id"));
+            entry.url = cursor.getString(cursor.getColumnIndex("url"));
+            entry.contentLength = cursor.getInt(cursor.getColumnIndex("contentLength"));
+            entry.currentLength = cursor.getInt(cursor.getColumnIndex("currentLength"));
+            entry.ranges = gson.fromJson(cursor.getString(cursor.getColumnIndex("ranges")), new TypeToken<HashMap<Integer, Long>>() {
             }.getType());
-            e.isSupportRange = cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0;
-            e.state = Enum.valueOf(DownloadEntry.State.class, cursor.getString(cursor.getColumnIndex("state")));
-            es.add(e);
+            entry.isSupportRange = cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0;
+            entry.state = Enum.valueOf(DownloadEntry.State.class, cursor.getString(cursor.getColumnIndex("state")));
+            es.add(entry);
         }
         cursor.close();
         return es;

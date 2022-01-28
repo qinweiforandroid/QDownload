@@ -212,7 +212,7 @@ public class MultithreadDownloadListActivity extends BaseActivity {
         public void onClick(View v) {
             DownloadEntry entry = DownloadManager.findById(d.id());
             if (entry == null) {
-                entry = new DownloadEntry(d.id(), d.url);
+                entry = DownloadEntry.obtain(d.id(), d.url);
             }
             switch (entry.state) {
                 case PAUSED:

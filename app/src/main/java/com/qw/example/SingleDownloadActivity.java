@@ -52,9 +52,8 @@ public class SingleDownloadActivity extends BaseActivity implements View.OnClick
     @Override
     public void onClick(View v) {
         if (entity == null) {
-            entity = new DownloadEntry();
-            entity.id = "weixin680_for_single_download.apk";
-            entity.url = "http://gdown.baidu.com/data/wisegame/a2216288661d09b4/weixin_680.apk";
+            entity = DownloadEntry.obtain("weixin680_for_single_download.apk",
+                    "http://gdown.baidu.com/data/wisegame/a2216288661d09b4/weixin_680.apk");
             entity.isSupportRange = false;
             entity.contentLength = 33453820;
         }

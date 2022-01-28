@@ -5,23 +5,15 @@ package com.qw.download.utilities;
  * email: qinwei_it@163.com
  */
 public class TickTack {
-    private static TickTack mInstance;
     private long mLastStamp;
-
-    private TickTack() {
-
-    }
-
-    public synchronized static TickTack getInstance() {
-        if (mInstance == null) {
-            mInstance = new TickTack();
-        }
-        return mInstance;
+    private long interval;
+    public TickTack(long interval) {
+        this.interval=interval;
     }
 
     public synchronized boolean needToNotify() {
         long stamp = System.currentTimeMillis();
-        if (stamp - mLastStamp > 800) {
+        if (stamp - mLastStamp > interval) {
             mLastStamp = stamp;
             return true;
         }

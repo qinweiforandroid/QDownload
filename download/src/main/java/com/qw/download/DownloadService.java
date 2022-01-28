@@ -10,6 +10,7 @@ import android.os.Message;
 import com.qw.download.db.DownloadDBManager;
 import com.qw.download.utilities.DConstants;
 import com.qw.download.utilities.DLog;
+import com.qw.download.utilities.TickTack;
 
 import java.io.File;
 import java.util.HashMap;
@@ -63,6 +64,10 @@ public class DownloadService extends Service {
             }
         }
     };
+    /**
+     * 进度更新频率控制
+     */
+    private final TickTack progressTickTack = new TickTack(1000);
 
     public void executeNext(DownloadEntry e) {
         DownloadTask task = mTasks.remove(e.id);
@@ -168,7 +173,8 @@ public class DownloadService extends Service {
         }
 
         d(entry.id + " start");
-        DownloadTask task = new DownloadTask(entry, mExecutors, handler);
+
+        DownloadTask task = new DownloadTask(entry, mExecutors, handler, progressTickTack);
         mTasks.put(entry.id, task);
         task.start();
     }

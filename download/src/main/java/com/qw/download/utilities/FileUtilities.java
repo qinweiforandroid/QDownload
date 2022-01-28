@@ -23,7 +23,8 @@ public class FileUtilities {
     public static String getMd5FileName(String url) {
         byte[] md5 = getMD5(url.getBytes());
         BigInteger bi = new BigInteger(md5).abs();
-        return bi.toString(RADIX) + url.substring(url.lastIndexOf("/") + 1);
+//        return bi.toString(RADIX) + url.substring(url.lastIndexOf("/") + 1);
+        return bi.toString(RADIX);
     }
 
     private static byte[] getMD5(byte[] data) {

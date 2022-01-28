@@ -26,12 +26,17 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
     private volatile ConnectThread connectThread;
     private volatile int currentRetryIndex;
     private final File destFile;
+    private final TickTack mSpeedTickTack;
+    private final TickTack mProgressTickTack;
 
-    public DownloadTask(DownloadEntry entry, ExecutorService mExecutors, Handler handler) {
+    public DownloadTask(DownloadEntry entry, ExecutorService mExecutors, Handler handler, TickTack progressTickTack) {
         this.entry = entry;
         this.mExecutors = mExecutors;
         this.mHandler = handler;
+        this.mProgressTickTack = progressTickTack;
         this.destFile = DownloadConfig.getInstance().getDownloadFile(entry.url);
+        //计算500毫秒内的下载速度
+        this.mSpeedTickTack = new TickTack(500);
     }
 
     public void start() {
@@ -99,6 +104,9 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
 
     private void download() {
         d("download");
+        //记录触发下载的时间戳
+        initDownloadTempData();
+
         entry.state = DownloadEntry.State.ING;
         notifyUpdate(DownloadService.NOTIFY_ING);
         if (entry.isSupportRange) {
@@ -107,6 +115,7 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
             singleThreadDownload();
         }
     }
+
 
     private void multithreadingDownload() {
         d("startMultithreadingDownload");
@@ -184,11 +193,16 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
     /**
      * 缓存当前进度
      */
-    private long tempCurrentLength;
+    private volatile long tempCurrentLength;
     /**
      * 缓存进度的时间戳
      */
-    private long timestamp;
+    private volatile long timestamp;
+
+    private void initDownloadTempData() {
+        timestamp = System.currentTimeMillis();
+        tempCurrentLength = entry.currentLength;
+    }
 
     @Override
     public synchronized void onDownloadProgressUpdate(int index, long progress) {
@@ -196,15 +210,15 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
         if (entry.isSupportRange && entry.ranges != null) {
             entry.ranges.put(index, entry.ranges.get(index) + progress);
         }
-        if (TickTack.getInstance().needToNotify()) {
-            if (tempCurrentLength > 0) {
-                //计算下载速度
-                float time = (System.currentTimeMillis() - timestamp) / 1000f;
-                entry.speed = (int) ((entry.currentLength - tempCurrentLength) / time);
-            }
+        if (mSpeedTickTack.needToNotify()) {
+            //计算下载速度
+            float time = (System.currentTimeMillis() - timestamp) / 1000f;
+            entry.speed = (int) ((entry.currentLength - tempCurrentLength) / time);
             tempCurrentLength = entry.currentLength;
             timestamp = System.currentTimeMillis();
-            d("thread[" + index + "] progress " + entry.currentLength + "/" + entry.contentLength);
+        }
+        if (mProgressTickTack.needToNotify()) {
+            d("thread[" + index + "] progress " + entry.currentLength + "/" + entry.contentLength + " speed:" + entry.speed + "/s");
             notifyUpdate(DownloadService.NOTIFY_PROGRESS_UPDATE);
         }
     }

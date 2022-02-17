@@ -24,11 +24,11 @@ class DownloadThread implements Runnable {
     private final String url;
     private final File destFile;
     private final int index;
-    private final int start;
-    private final int end;
+    private final long start;
+    private final long end;
     private OnDownloadListener listener;
 
-    public DownloadThread(String url, File destFile, int threadIndex, int start, int end, OnDownloadListener listener) {
+    public DownloadThread(String url, File destFile, int threadIndex, long start, long end, OnDownloadListener listener) {
         this.url = url;
         this.destFile = destFile;
         this.index = threadIndex;

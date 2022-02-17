@@ -121,17 +121,17 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
         d("startMultithreadingDownload");
         threads = new DownloadThread[DownloadConfig.getInstance().getMaxThread()];
         states = new DownloadEntry.State[DownloadConfig.getInstance().getMaxThread()];
-        int start;
-        int end;
+        long start;
+        long end;
         if (entry.ranges == null) {
             entry.ranges = new HashMap<>();
             for (int i = 0; i < DownloadConfig.getInstance().getMaxThread(); i++) {
                 entry.ranges.put(i, 0L);
             }
         }
-        int block = (int) (entry.contentLength / threads.length);
+        long block = (int) (entry.contentLength / threads.length);
         for (int i = 0; i < threads.length; i++) {
-            start = (int) (i * block + entry.ranges.get(i));
+            start = i * block + entry.ranges.get(i);
             if (i != threads.length - 1) {
                 end = (i + 1) * block - 1;
             } else {

@@ -1,5 +1,6 @@
 package com.qw.example;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -14,6 +15,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
 
@@ -24,6 +26,11 @@ import com.qw.download.DownloadManager;
 import com.qw.download.DownloadWatcher;
 import com.qw.example.core.BaseActivity;
 import com.qw.example.widget.QProgress;
+import com.qw.permission.OnRequestPermissionsResultListener;
+import com.qw.permission.Permission;
+import com.qw.permission.PermissionResult;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -87,6 +94,19 @@ public class MultithreadDownloadListActivity extends BaseActivity {
 //        modules.add(new DownloadEntry("虾米.apk", "http://download.taobaocdn.com/wireless/xiami-android-spark/latest/xiami-android-spark_701287.apk"));
         modules.addAll(gen());
         adapter.notifyDataSetChanged();
+
+        Permission.Companion.init(this)
+                .permissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE})
+                .setOnRequestPermissionsResultListener(new OnRequestPermissionsResultListener() {
+                    @Override
+                    public void onRequestPermissionsResult(@NotNull PermissionResult permissionResult) {
+                        if (!permissionResult.isGrant()) {
+                            Toast.makeText(MultithreadDownloadListActivity.this, "需要sdcard读写权限", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+                    }
+                })
+                .request();
     }
 
     private ArrayList<ApkEntry> gen() {
@@ -99,7 +119,7 @@ public class MultithreadDownloadListActivity extends BaseActivity {
         entry = new ApkEntry();
         entry.name = "QQ";
         entry.cover = "https://image.16pic.com/00/31/19/16pic_3119624_s.jpg?imageView2/0/format/png";
-        entry.url = "https://e2ac3417f3e17ad4cac7098653e78ea6.dlied1.cdntips.net/dlied1.qq.com/qqweb/QQ_1/android_apk/Android_8.8.68.7265_537112589_32.apk?mkey=61f28f693af726ff&f=17c9&cip=58.247.0.10&proto=https&access_type=";
+        entry.url = "https://ip218338852.out.azhimalayanvh.com/fs08/2022/03/22/10/110_57f4911d9460f343f73b57b59bbc9bed.apk?yingid=wdj_web&fname=QQ&productid=2011&pos=wdj_web%2Fdetail_normal_dl%2F0&appid=566489&packageid=201080855&apprd=566489&iconUrl=http%3A%2F%2Fandroid-artworks.25pp.com%2Ffs08%2F2022%2F04%2F01%2F6%2F110_2431ce87beb7edaa6061e9e5ba3ad2be_con.png&pkg=com.tencent.mobileqq&did=0356ba5bacc5058a13a2d02805479160&vcode=2654&md5=1e3493b2e78f4f11247ec3c9a56e0606&ali_redirect_domain=alissl.ucdl.pp.uc.cn&ali_redirect_ex_ftag=86f43da289ad52bc50c0e23dd018f58ee1663c57d386180b&ali_redirect_ex_tmining_ts=1650107491&ali_redirect_ex_tmining_expire=3600&ali_redirect_ex_hot=111";
         apkEntries.add(entry);
         entry = new ApkEntry();
         entry.name = "支付宝";
@@ -176,8 +196,13 @@ public class MultithreadDownloadListActivity extends BaseActivity {
             } else {
                 mDownloadStateLabel.setText(formatSize(entry.speed) + "/s");
                 mDownloadProgressDesLabel.setText(formatSize(entry.currentLength) + "/" + formatSize(entry.contentLength));
-                mDownloadProgress.setMax((int) entry.contentLength);
-                mDownloadProgress.notifyDataChanged((int) entry.currentLength);
+                if (entry.contentLength == 0L) {
+                    mDownloadProgress.setMax(1);
+                    mDownloadProgress.notifyDataChanged(0);
+                } else {
+                    mDownloadProgress.setMax((int) entry.contentLength);
+                    mDownloadProgress.notifyDataChanged((int) entry.currentLength);
+                }
                 switch (entry.state) {
                     case PAUSED:
                         mDownloadLabel.setText("继续");

@@ -22,8 +22,8 @@ public class QProgress extends View {
     private Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private RectF mRectF;
 
-    private int max = 100;
-    private int progress = 0;
+    private long max = 100;
+    private long progress = 0;
 
     private int startX;
     private int endX;

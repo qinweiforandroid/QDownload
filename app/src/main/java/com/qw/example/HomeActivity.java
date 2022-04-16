@@ -1,5 +1,6 @@
 package com.qw.example;
 
+import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -10,7 +11,11 @@ import android.widget.TextView;
 
 import com.qw.download.DownloadConfig;
 import com.qw.example.core.BaseActivity;
-import com.qw.example.utils.PermissionHelper;
+import com.qw.permission.OnRequestPermissionsResultListener;
+import com.qw.permission.Permission;
+import com.qw.permission.PermissionResult;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by qinwei on 2016/4/22 10:51
@@ -22,7 +27,15 @@ public class HomeActivity extends BaseActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        PermissionHelper.requestPermission(this, PermissionHelper.Permission.STORAGE, PermissionHelper.ASK_WRITE_EXTERNAL_STORAGE);
+        Permission.Companion.init(this)
+                .permissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE})
+                .setOnRequestPermissionsResultListener(new OnRequestPermissionsResultListener() {
+                    @Override
+                    public void onRequestPermissionsResult(@NotNull PermissionResult permissionResult) {
+                        
+                    }
+                })
+                .request();
     }
 
     @Override

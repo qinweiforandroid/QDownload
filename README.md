@@ -24,10 +24,27 @@ QDownload是基于Android平台实现的下载框架。API简洁易上手，只�
 
 ## 1、如何使用
 
+
+
 ### 1.1、导入依赖
 
+**Step 1.** Add it in your root build.gradle at the end of repositories
+
 ```groovy
-implementation 'com.qw.download:download:1.0.0-alpha01'
+	allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
+```
+
+**Step 2.** Add the dependency
+
+```groovy
+dependencies {
+  implementation 'com.github.qinweiforandroid:QDownload:1.0.0416'
+}
 ```
 
 ### 1.2、初始化下载组件

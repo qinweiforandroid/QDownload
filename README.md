@@ -16,11 +16,11 @@ QDownload是基于Android平台实现的下载框架。API简洁易上手，只�
 
 **demo主页**
 
-<img src="/png/device-2022-01-28-204742.png" style="zoom:33%;text-align:left" />
+ <img src="https://img-blog.csdnimg.cn/img_convert/d74438b7f8f7a5710fd023887359a1a6.png"   width="30%">
 
 **多任务多线程断点下载页面**
 
-<img src="/png/device-2022-01-28-204810.png" style="zoom:33%;" />
+ <img src="https://img-blog.csdnimg.cn/img_convert/709186fda0c9011c60e5daa9641b161f.png"   width="30%">
 
 ## 1、如何使用
 

@@ -67,6 +67,7 @@ public class DownloadConfig {
     public boolean isAutoResume() {
         return autoResume;
     }
+
     public static class Builder {
         private int max_tasks = 3;
         private int max_threads = 2;
@@ -106,8 +107,9 @@ public class DownloadConfig {
             return this;
         }
 
-        public void setDownloadDir(String downloadDir) {
+        public Builder setDownloadDir(String downloadDir) {
             this.downloadDir = downloadDir;
+            return this;
         }
 
         public DownloadConfig builder() {
@@ -118,7 +120,7 @@ public class DownloadConfig {
             config.connect_timeout = connect_timeout;
             config.read_timeout = read_timeout;
             config.downloadDir = downloadDir;
-            config.autoResume=autoResume;
+            config.autoResume = autoResume;
             return config;
         }
     }

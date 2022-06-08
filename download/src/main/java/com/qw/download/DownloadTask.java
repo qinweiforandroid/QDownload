@@ -81,7 +81,7 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
         if (connectThread != null && connectThread.isRunning()) {
             connectThread.cancel();
         } else {
-            if (!entry.isSupportRange) {
+            if (!entry.isSupportRange()) {
                 //单线程下载不支持暂停操作
                 cancel();
                 return;
@@ -174,7 +174,7 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
     }
 
     public synchronized void notifyUpdate(int what) {
-        if (entry.isSupportRange) {
+        if (entry.isSupportRange()) {
             DownloadDBManager.getInstance().newOrUpdate(entry);
         }
         Message msg = Message.obtain();
@@ -186,7 +186,7 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
     @Override
     public synchronized void onConnectCompleted(long contentLength, boolean isSupportRange) {
         d("onConnectCompleted contentLength:" + contentLength + ",isSupportRange:" + isSupportRange);
-        entry.isSupportRange = isSupportRange;
+        entry.setSupportRange(isSupportRange);
         entry.contentLength = contentLength;
         download();
     }
@@ -222,7 +222,7 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
     @Override
     public synchronized void onDownloadProgressUpdate(int index, long progress) {
         entry.currentLength += progress;
-        if (entry.isSupportRange && entry.ranges != null) {
+        if (entry.isSupportRange() && entry.ranges != null) {
             entry.ranges.put(index, entry.ranges.get(index) + progress);
         }
         if (mSpeedTickTack.needToNotify()) {
@@ -261,12 +261,12 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
             }
         }
         //只有支持断点续传 才能进行重试恢复下载操作
-        if (entry.isSupportRange && currentRetryIndex < DownloadConfig.getInstance().getMaxTask()) {
+        if (entry.isSupportRange() && currentRetryIndex < DownloadConfig.getInstance().getMaxTask()) {
             d(" thread[" + index + "] error retry " + currentRetryIndex);
             currentRetryIndex++;
             download();
         } else {
-            if (!entry.isSupportRange) {
+            if (!entry.isSupportRange()) {
                 //不支持断点下载 要把缓存文件删掉
                 destFile.deleteOnExit();
                 entry.reset();

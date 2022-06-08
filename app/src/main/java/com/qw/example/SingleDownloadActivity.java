@@ -54,7 +54,7 @@ public class SingleDownloadActivity extends BaseActivity implements View.OnClick
         if (entity == null) {
             entity = DownloadEntry.obtain("weixin680_for_single_download.apk",
                     "http://gdown.baidu.com/data/wisegame/a2216288661d09b4/weixin_680.apk");
-            entity.isSupportRange = false;
+            entity.setSupportRange(false);
             entity.enableRange = false;
             entity.downloadDir = getExternalCacheDir().getAbsolutePath();
             entity.fileName = "weixin_680.apk";

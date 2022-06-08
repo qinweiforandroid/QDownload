@@ -11,7 +11,7 @@ import java.util.HashMap;
 public class DownloadEntry implements Serializable {
     public String id;
     public String url;
-    public boolean isSupportRange;
+    private boolean isSupportRange;
     public long contentLength;
     public long currentLength;
     public State state;
@@ -40,6 +40,10 @@ public class DownloadEntry implements Serializable {
         this.url = url;
         state = State.IDLE;
         enableRange = true;
+    }
+
+    public void setSupportRange(boolean supportRange) {
+        isSupportRange = supportRange;
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.qw.download.db;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -9,7 +10,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.qw.download.DownloadEntry;
 
@@ -54,7 +54,7 @@ public class DownloadDBManager {
         value.put("currentLength", e.currentLength);
         value.put("state", e.state.name());
         value.put("ranges", gson.toJson(e.ranges));
-        value.put("isSupportRange", e.isSupportRange ? 0 : 1);
+        value.put("isSupportRange", e.isSupportRange() ? 0 : 1);
         long number = getDB().insert(DownloadDBHelper.DB_TABLE, null, value);
         return number > 0;
     }
@@ -67,7 +67,7 @@ public class DownloadDBManager {
         value.put("currentLength", d.currentLength);
         value.put("state", d.state.name());
         value.put("ranges", gson.toJson(d.ranges));
-        value.put("isSupportRange", d.isSupportRange ? 0 : 1);
+        value.put("isSupportRange", d.isSupportRange() ? 0 : 1);
         long number = getDB().update(DownloadDBHelper.DB_TABLE, value, " id=?", new String[]{d.id});
         return number > 0;
     }
@@ -80,6 +80,7 @@ public class DownloadDBManager {
         }
     }
 
+    @SuppressLint("Range")
     public DownloadEntry queryById(String id) {
         DownloadEntry entry = null;
         Cursor cursor = getDB().rawQuery("SELECT * from " + DownloadDBHelper.DB_TABLE + " WHERE id=?", new String[]{id});
@@ -90,7 +91,7 @@ public class DownloadDBManager {
             entry.currentLength = cursor.getInt(cursor.getColumnIndex("currentLength"));
             entry.ranges = gson.fromJson(cursor.getString(cursor.getColumnIndex("ranges")), new TypeToken<HashMap<Integer, Long>>() {
             }.getType());
-            entry.isSupportRange = cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0;
+            entry.setSupportRange(cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0);
             entry.state = Enum.valueOf(DownloadEntry.State.class, cursor.getString(cursor.getColumnIndex("state")));
         }
         cursor.close();
@@ -107,6 +108,7 @@ public class DownloadDBManager {
         return false;
     }
 
+    @SuppressLint("Range")
     public ArrayList<DownloadEntry> queryAll() {
         ArrayList<DownloadEntry> es = new ArrayList<>();
         DownloadEntry entry;
@@ -120,7 +122,7 @@ public class DownloadDBManager {
             entry.currentLength = cursor.getInt(cursor.getColumnIndex("currentLength"));
             entry.ranges = gson.fromJson(cursor.getString(cursor.getColumnIndex("ranges")), new TypeToken<HashMap<Integer, Long>>() {
             }.getType());
-            entry.isSupportRange = cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0;
+            entry.setSupportRange(cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0);
             entry.state = Enum.valueOf(DownloadEntry.State.class, cursor.getString(cursor.getColumnIndex("state")));
             es.add(entry);
         }

@@ -2,9 +2,11 @@ package com.qw.download;
 
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 
 import com.qw.download.db.DownloadDBManager;
 import com.qw.download.utilities.DLog;
+import com.qw.download.utilities.FileUtilities;
 import com.qw.download.utilities.TickTack;
 
 import java.io.File;
@@ -34,9 +36,22 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
         this.mExecutors = mExecutors;
         this.mHandler = handler;
         this.mProgressTickTack = progressTickTack;
-        this.destFile = DownloadConfig.getInstance().getDownloadFile(entry.url);
+        this.destFile = genDestFile(entry);
         //计算500毫秒内的下载速度
         this.mSpeedTickTack = new TickTack(500);
+    }
+
+    private File genDestFile(DownloadEntry entry) {
+        if (TextUtils.isEmpty(entry.downloadDir)) {
+            //未指定文件路径使用全局
+            return DownloadConfig.getInstance().getDownloadFile(entry.url);
+        }
+        //使用用户指定文件路径
+        String fileName = entry.fileName;
+        if (TextUtils.isEmpty(fileName)) {
+            fileName = FileUtilities.getMd5FileName(entry.url);
+        }
+        return new File(entry.downloadDir, fileName);
     }
 
     public void start() {
@@ -109,7 +124,7 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
 
         entry.state = DownloadEntry.State.ING;
         notifyUpdate(DownloadService.NOTIFY_ING);
-        if (entry.isSupportRange) {
+        if (entry.isSupportRange()) {
             multithreadingDownload();
         } else {
             singleThreadDownload();

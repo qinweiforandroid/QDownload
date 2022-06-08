@@ -17,6 +17,19 @@ public class DownloadEntry implements Serializable {
     public State state;
     public HashMap<Integer, Long> ranges;
     public int speed;
+    /**
+     * 指定下载目录
+     */
+    public String downloadDir;
+    /**
+     * 文件名称
+     */
+    public String fileName;
+    /**
+     * 是否启用断点下载
+     */
+    public boolean enableRange;
+
 
     public static DownloadEntry obtain(String id, String url) {
         return new DownloadEntry(id, url);
@@ -26,6 +39,16 @@ public class DownloadEntry implements Serializable {
         this.id = id;
         this.url = url;
         state = State.IDLE;
+        enableRange = true;
+    }
+
+    /**
+     * 是否支持断点下载
+     *
+     * @return
+     */
+    public boolean isSupportRange() {
+        return enableRange && isSupportRange;
     }
 
     public void reset() {

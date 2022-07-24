@@ -13,4 +13,12 @@ public class DConstants {
     public static final int KEY_ACTION_CANCEL = 3;
     public static final int KEY_ACTION_PAUSE_ALL = 4;
     public static final int KEY_ACTION_RECOVER_ALL = 5;
+
+    public static final int NOTIFY_CONNECTING = 0;
+    public static final int NOTIFY_ERROR = 1;
+    public static final int NOTIFY_ING = 2;
+    public static final int NOTIFY_PROGRESS_UPDATE = 3;
+    public static final int NOTIFY_COMPLETED = 4;
+    public static final int NOTIFY_PAUSED = 5;
+    public static final int NOTIFY_CANCELLED = 6;
 }

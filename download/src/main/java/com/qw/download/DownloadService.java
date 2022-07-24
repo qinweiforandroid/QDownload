@@ -6,10 +6,12 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.text.TextUtils;
 
 import com.qw.download.db.DownloadDBManager;
 import com.qw.download.utilities.DConstants;
 import com.qw.download.utilities.DLog;
+import com.qw.download.utilities.FileUtilities;
 import com.qw.download.utilities.TickTack;
 
 import java.io.File;
@@ -28,13 +30,7 @@ import static com.qw.download.DownloadEntry.State;
  * email:qinwei_it@163.com
  */
 public class DownloadService extends Service {
-    public static final int NOTIFY_CONNECTING = 0;
-    public static final int NOTIFY_ERROR = 1;
-    public static final int NOTIFY_ING = 2;
-    public static final int NOTIFY_PROGRESS_UPDATE = 3;
-    public static final int NOTIFY_COMPLETED = 4;
-    public static final int NOTIFY_PAUSED = 5;
-    public static final int NOTIFY_CANCELLED = 6;
+
 
     private static final String TAG = "DownloadService";
     /**
@@ -53,10 +49,10 @@ public class DownloadService extends Service {
             DownloadEntry e = (DownloadEntry) msg.obj;
             DownloadChanger.getInstance().notifyDataChanged(e);
             switch (msg.what) {
-                case NOTIFY_ERROR:
-                case NOTIFY_COMPLETED:
-                case NOTIFY_PAUSED:
-                case NOTIFY_CANCELLED:
+                case DConstants.NOTIFY_ERROR:
+                case DConstants.NOTIFY_COMPLETED:
+                case DConstants.NOTIFY_PAUSED:
+                case DConstants.NOTIFY_CANCELLED:
                     executeNext(e);
                     break;
                 default:
@@ -142,12 +138,26 @@ public class DownloadService extends Service {
         if (entry.isDone()) {
             return;
         }
+        configEntry(entry);
         d(entry.id + " add");
         DownloadChanger.getInstance().addOperationTasks(entry);
         if (mTasks.size() >= DownloadConfig.getInstance().getMaxTask()) {
             addQueues(entry);
         } else {
             start(entry);
+        }
+    }
+
+    private void configEntry(DownloadEntry entry) {
+        String dir = entry.getDir();
+        if (TextUtils.isEmpty(dir)) {
+            dir = DownloadConfig.getInstance().getDownloadDir();
+            entry.setDir(dir);
+        }
+        String name = entry.getName();
+        if (TextUtils.isEmpty(name)) {
+            name = FileUtilities.getMd5FileName(entry.url);
+            entry.setName(name);
         }
     }
 
@@ -163,18 +173,18 @@ public class DownloadService extends Service {
 
 
     private void start(DownloadEntry entry) {
-        File destFile = DownloadConfig.getInstance().getDownloadFile(entry.url);
-        //check 已下载文件被误删数据恢复初始状态
+        File destFile = new File(entry.getDir(), entry.getName());
         if (!destFile.exists() && entry.currentLength > 0) {
+            //check 已下载文件被误删数据恢复初始状态
             entry.reset();
         }
         if (entry.isDone()) {
             return;
         }
-
         d(entry.id + " start");
-
         DownloadTask task = new DownloadTask(entry, mExecutors, handler, progressTickTack);
+        task.setMaxThread(DownloadConfig.getInstance().getMaxThread());
+        task.setMaxRetryCount(DownloadConfig.getInstance().getMaxRetryCount());
         mTasks.put(entry.id, task);
         task.start();
     }

@@ -1,11 +1,5 @@
 package com.qw.download.utilities;
 
-import android.os.Environment;
-import android.os.Trace;
-
-import com.qw.download.DownloadConfig;
-
-import java.io.File;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

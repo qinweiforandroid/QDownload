@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.DatabaseErrorHandler;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -12,6 +11,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.qw.download.DownloadEntry;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,9 +27,10 @@ public class DownloadDBManager {
     private Gson gson;
     private DownloadDBHelper dbHelper;
 
+    private static final int DB_VERSION = 2;
 
     public DownloadDBManager(Context context) {
-        dbHelper = new DownloadDBHelper(context, "download.db", null, 1);
+        dbHelper = new DownloadDBHelper(context, "download.db", null, DB_VERSION);
         gson = new Gson();
     }
 
@@ -46,29 +49,29 @@ public class DownloadDBManager {
         return dbHelper.getReadableDatabase();
     }
 
-    public boolean add(DownloadEntry e) {
-        ContentValues value = new ContentValues();
-        value.put("id", e.id);
-        value.put("url", e.url);
-        value.put("contentLength", e.contentLength);
-        value.put("currentLength", e.currentLength);
-        value.put("state", e.state.name());
-        value.put("ranges", gson.toJson(e.ranges));
-        value.put("isSupportRange", e.isSupportRange() ? 0 : 1);
-        long number = getDB().insert(DownloadDBHelper.DB_TABLE, null, value);
+    public synchronized boolean add(DownloadEntry d) {
+        long number = getDB().insert(DownloadDBHelper.DB_TABLE, null,
+                toContentValues(d));
         return number > 0;
     }
 
-    public boolean update(DownloadEntry d) {
+    private ContentValues toContentValues(DownloadEntry d) {
         ContentValues value = new ContentValues();
         value.put("id", d.id);
         value.put("url", d.url);
+        value.put("dir", d.getDir());
+        value.put("name", d.getName());
         value.put("contentLength", d.contentLength);
         value.put("currentLength", d.currentLength);
         value.put("state", d.state.name());
         value.put("ranges", gson.toJson(d.ranges));
-        value.put("isSupportRange", d.isSupportRange() ? 0 : 1);
-        long number = getDB().update(DownloadDBHelper.DB_TABLE, value, " id=?", new String[]{d.id});
+        value.put("isSupportRange", d.isRange() ? 0 : 1);
+        return value;
+    }
+
+    public synchronized boolean update(DownloadEntry d) {
+        long number = getDB().update(DownloadDBHelper.DB_TABLE, toContentValues(d),
+                " id=?", new String[]{d.id});
         return number > 0;
     }
 
@@ -81,25 +84,42 @@ public class DownloadDBManager {
     }
 
     @SuppressLint("Range")
+    @Nullable
     public DownloadEntry queryById(String id) {
         DownloadEntry entry = null;
-        Cursor cursor = getDB().rawQuery("SELECT * from " + DownloadDBHelper.DB_TABLE + " WHERE id=?", new String[]{id});
+        Cursor cursor = getDB().rawQuery("SELECT * from " + DownloadDBHelper.DB_TABLE +
+                " WHERE id=?", new String[]{id});
         while (cursor.moveToNext()) {
-            entry = DownloadEntry.obtain(cursor.getString(cursor.getColumnIndex("id")),
-                    cursor.getString(cursor.getColumnIndex("url")));
-            entry.contentLength = cursor.getInt(cursor.getColumnIndex("contentLength"));
-            entry.currentLength = cursor.getInt(cursor.getColumnIndex("currentLength"));
-            entry.ranges = gson.fromJson(cursor.getString(cursor.getColumnIndex("ranges")), new TypeToken<HashMap<Integer, Long>>() {
-            }.getType());
-            entry.setSupportRange(cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0);
-            entry.state = Enum.valueOf(DownloadEntry.State.class, cursor.getString(cursor.getColumnIndex("state")));
+            entry = dto(cursor);
         }
         cursor.close();
         return entry;
     }
 
+    @SuppressLint("Range")
+    private DownloadEntry dto(Cursor cursor) {
+        DownloadEntry entry =new DownloadEntry();
+        entry.id = cursor.getString(cursor.getColumnIndex("id"));
+        entry.url = cursor.getString(cursor.getColumnIndex("url"));
+
+        entry.setDir(cursor.getString(cursor.getColumnIndex("dir")));
+        entry.setName(cursor.getString(cursor.getColumnIndex("name")));
+
+        entry.contentLength = cursor.getInt(cursor.getColumnIndex("contentLength"));
+        entry.currentLength = cursor.getInt(cursor.getColumnIndex("currentLength"));
+        entry.ranges = gson.fromJson(cursor.getString(cursor.getColumnIndex("ranges")),
+                new TypeToken<HashMap<Integer, Long>>() {
+                }.getType());
+        entry.setRange(cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0);
+        entry.state = Enum.valueOf(DownloadEntry.State.class,
+                cursor.getString(cursor.getColumnIndex("state")));
+
+        return entry;
+    }
+
     public boolean exists(String id) {
-        Cursor cursor = getDB().rawQuery("SELECT * from " + DownloadDBHelper.DB_TABLE + " WHERE id=?", new String[]{id});
+        Cursor cursor = getDB().rawQuery("SELECT * from " + DownloadDBHelper.DB_TABLE +
+                " WHERE id=?", new String[]{id});
         if (cursor.moveToNext()) {
             cursor.close();
             return true;
@@ -109,30 +129,26 @@ public class DownloadDBManager {
     }
 
     @SuppressLint("Range")
+    @NotNull
     public ArrayList<DownloadEntry> queryAll() {
         ArrayList<DownloadEntry> es = new ArrayList<>();
-        DownloadEntry entry;
-        Cursor cursor = getDB().rawQuery("SELECT * from " + DownloadDBHelper.DB_TABLE, null);
+        Cursor cursor = getDB().rawQuery("SELECT * from " + DownloadDBHelper.DB_TABLE,
+                null);
         while (cursor.moveToNext()) {
-            entry = DownloadEntry.obtain(cursor.getString(cursor.getColumnIndex("id")),
-                    cursor.getString(cursor.getColumnIndex("url")));
-            entry.id = cursor.getString(cursor.getColumnIndex("id"));
-            entry.url = cursor.getString(cursor.getColumnIndex("url"));
-            entry.contentLength = cursor.getInt(cursor.getColumnIndex("contentLength"));
-            entry.currentLength = cursor.getInt(cursor.getColumnIndex("currentLength"));
-            entry.ranges = gson.fromJson(cursor.getString(cursor.getColumnIndex("ranges")), new TypeToken<HashMap<Integer, Long>>() {
-            }.getType());
-            entry.setSupportRange(cursor.getInt(cursor.getColumnIndex("isSupportRange")) == 0);
-            entry.state = Enum.valueOf(DownloadEntry.State.class, cursor.getString(cursor.getColumnIndex("state")));
-            es.add(entry);
+            es.add(dto(cursor));
         }
         cursor.close();
         return es;
     }
 
-    public boolean delete(DownloadEntry e) {
-        long number = getDB().delete(DownloadDBHelper.DB_TABLE, "id=?", new String[]{e.id});
+    public boolean delete(String id) {
+        long number = getDB().delete(DownloadDBHelper.DB_TABLE, "id=?",
+                new String[]{id});
         return number > 0;
+    }
+
+    public boolean delete(DownloadEntry e) {
+        return delete(e.id);
     }
 
     public boolean delete(ArrayList<DownloadEntry> es) {
@@ -152,12 +168,9 @@ public class DownloadDBManager {
     public static class DownloadDBHelper extends SQLiteOpenHelper {
         public final static String DB_TABLE = "tb_download";
 
-        public DownloadDBHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
+        public DownloadDBHelper(Context context, String name, SQLiteDatabase.CursorFactory factory,
+                                int version) {
             super(context, name, factory, version);
-        }
-
-        public DownloadDBHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version, DatabaseErrorHandler errorHandler) {
-            super(context, name, factory, version, errorHandler);
         }
 
         @Override
@@ -165,10 +178,12 @@ public class DownloadDBManager {
             try {
                 db.execSQL("CREATE TABLE " + DB_TABLE + "  (" +
                         "id  TEXT NOT NULL," +
-                        "url  TEXT," +
+                        "url  TEXT NOT NULL DEFAULT ''," +
                         "contentLength  INTEGER DEFAULT 0," +
                         "currentLength  INTEGER DEFAULT 0," +
-                        "state  TEXT," +
+                        "state  TEXT NOT NULL DEFAULT ''," +
+                        "dir  TEXT NOT NULL DEFAULT ''," +
+                        "name  TEXT NOT NULL DEFAULT ''," +
                         "ranges  TEXT," +
                         "isSupportRange  INTEGER," +
                         "PRIMARY KEY (id)" + ");");
@@ -179,7 +194,10 @@ public class DownloadDBManager {
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
+            if (oldVersion < 2) {
+                db.execSQL("ALTER TABLE tb_download ADD COLUMN \"dir\" TEXT NOT NULL DEFAULT ''");
+                db.execSQL("ALTER TABLE tb_download ADD COLUMN \"name\" TEXT NOT NULL DEFAULT ''");
+            }
         }
     }
 }

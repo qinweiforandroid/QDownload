@@ -2,11 +2,10 @@ package com.qw.download;
 
 import android.os.Handler;
 import android.os.Message;
-import android.text.TextUtils;
 
 import com.qw.download.db.DownloadDBManager;
+import com.qw.download.utilities.DConstants;
 import com.qw.download.utilities.DLog;
-import com.qw.download.utilities.FileUtilities;
 import com.qw.download.utilities.TickTack;
 
 import java.io.File;
@@ -22,37 +21,36 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
     private final static String TAG = "Task";
     private ExecutorService mExecutors;
     private final Handler mHandler;
+    private int maxThreads = 1;
+    private int maxRetryCount = 1;
     private volatile DownloadEntry entry;
     private volatile DownloadThread[] threads;
     private volatile DownloadEntry.State[] states;
     private volatile ConnectThread connectThread;
-    private volatile int currentRetryIndex;
     private final File destFile;
     private final TickTack mSpeedTickTack;
     private final TickTack mProgressTickTack;
+    private volatile int currentRetryIndex;
 
     public DownloadTask(DownloadEntry entry, ExecutorService mExecutors, Handler handler, TickTack progressTickTack) {
         this.entry = entry;
         this.mExecutors = mExecutors;
         this.mHandler = handler;
         this.mProgressTickTack = progressTickTack;
-        this.destFile = genDestFile(entry);
+        this.destFile = new File(entry.getDir(), entry.getName());
+        d("file:"+destFile.getAbsolutePath());
         //计算500毫秒内的下载速度
         this.mSpeedTickTack = new TickTack(500);
     }
 
-    private File genDestFile(DownloadEntry entry) {
-        if (TextUtils.isEmpty(entry.downloadDir)) {
-            //未指定文件路径使用全局
-            return DownloadConfig.getInstance().getDownloadFile(entry.url);
-        }
-        //使用用户指定文件路径
-        String fileName = entry.fileName;
-        if (TextUtils.isEmpty(fileName)) {
-            fileName = FileUtilities.getMd5FileName(entry.url);
-        }
-        return new File(entry.downloadDir, fileName);
+    public void setMaxThread(int size) {
+        this.maxThreads = size;
     }
+
+    public void setMaxRetryCount(int maxRetryCount) {
+        this.maxRetryCount = maxRetryCount;
+    }
+
 
     public void start() {
         d("start");
@@ -69,7 +67,7 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
         connectThread = new ConnectThread(entry.url, this);
         entry.state = DownloadEntry.State.CONNECT;
         mExecutors.execute(connectThread);
-        notifyUpdate(DownloadService.NOTIFY_CONNECTING);
+        notifyUpdate(DConstants.NOTIFY_CONNECTING);
     }
 
     private void d(String msg) {
@@ -81,7 +79,7 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
         if (connectThread != null && connectThread.isRunning()) {
             connectThread.cancel();
         } else {
-            if (!entry.isSupportRange()) {
+            if (!entry.isRange()) {
                 //单线程下载不支持暂停操作
                 cancel();
                 return;
@@ -93,7 +91,7 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
             }
         }
         entry.state = DownloadEntry.State.PAUSED;
-        notifyUpdate(DownloadService.NOTIFY_PAUSED);
+        notifyUpdate(DConstants.NOTIFY_PAUSED);
     }
 
     public void cancel() {
@@ -114,7 +112,7 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
         }
         entry.state = DownloadEntry.State.CANCELLED;
         entry.reset();
-        notifyUpdate(DownloadService.NOTIFY_CANCELLED);
+        notifyUpdate(DConstants.NOTIFY_CANCELLED);
     }
 
     private void download() {
@@ -123,8 +121,8 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
         initDownloadTempData();
 
         entry.state = DownloadEntry.State.ING;
-        notifyUpdate(DownloadService.NOTIFY_ING);
-        if (entry.isSupportRange()) {
+        notifyUpdate(DConstants.NOTIFY_ING);
+        if (entry.isRange()) {
             multithreadingDownload();
         } else {
             singleThreadDownload();
@@ -134,13 +132,13 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
 
     private void multithreadingDownload() {
         d("startMultithreadingDownload");
-        threads = new DownloadThread[DownloadConfig.getInstance().getMaxThread()];
-        states = new DownloadEntry.State[DownloadConfig.getInstance().getMaxThread()];
+        threads = new DownloadThread[maxThreads];
+        states = new DownloadEntry.State[maxThreads];
         long start;
         long end;
         if (entry.ranges == null) {
             entry.ranges = new HashMap<>();
-            for (int i = 0; i < DownloadConfig.getInstance().getMaxThread(); i++) {
+            for (int i = 0; i < maxThreads; i++) {
                 entry.ranges.put(i, 0L);
             }
         }
@@ -170,11 +168,11 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
         states[0] = DownloadEntry.State.ING;
         entry.state = DownloadEntry.State.ING;
         mExecutors.execute(threads[0]);
-        notifyUpdate(DownloadService.NOTIFY_ING);
+        notifyUpdate(DConstants.NOTIFY_ING);
     }
 
     public synchronized void notifyUpdate(int what) {
-        if (entry.isSupportRange()) {
+        if (entry.isRange()) {
             DownloadDBManager.getInstance().newOrUpdate(entry);
         }
         Message msg = Message.obtain();
@@ -186,7 +184,7 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
     @Override
     public synchronized void onConnectCompleted(long contentLength, boolean isSupportRange) {
         d("onConnectCompleted contentLength:" + contentLength + ",isSupportRange:" + isSupportRange);
-        entry.setSupportRange(isSupportRange);
+        entry.setRange(isSupportRange && entry.isRange());
         entry.contentLength = contentLength;
         download();
     }
@@ -195,14 +193,14 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
     public synchronized void onConnectError(String msg) {
         d("onConnectError " + msg);
         entry.state = DownloadEntry.State.ERROR;
-        if (currentRetryIndex < DownloadConfig.getInstance().getMaxRetryCount()) {
+        if (currentRetryIndex < maxRetryCount) {
             d("onConnectError retry connect " + currentRetryIndex);
             currentRetryIndex++;
             connect();
             return;
         }
         currentRetryIndex = 0;
-        notifyUpdate(DownloadService.NOTIFY_ERROR);
+        notifyUpdate(DConstants.NOTIFY_ERROR);
     }
 
     /**
@@ -222,7 +220,7 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
     @Override
     public synchronized void onDownloadProgressUpdate(int index, long progress) {
         entry.currentLength += progress;
-        if (entry.isSupportRange() && entry.ranges != null) {
+        if (entry.isRange() && entry.ranges != null) {
             entry.ranges.put(index, entry.ranges.get(index) + progress);
         }
         if (mSpeedTickTack.needToNotify()) {
@@ -234,7 +232,7 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
         }
         if (mProgressTickTack.needToNotify()) {
             d("thread[" + index + "] progress " + entry.currentLength + "/" + entry.contentLength + " speed:" + entry.speed + "/s");
-            notifyUpdate(DownloadService.NOTIFY_PROGRESS_UPDATE);
+            notifyUpdate(DConstants.NOTIFY_PROGRESS_UPDATE);
         }
     }
 
@@ -248,7 +246,7 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
             }
         }
         entry.state = DownloadEntry.State.DONE;
-        notifyUpdate(DownloadService.NOTIFY_COMPLETED);
+        notifyUpdate(DConstants.NOTIFY_COMPLETED);
     }
 
     @Override
@@ -261,18 +259,18 @@ class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThr
             }
         }
         //只有支持断点续传 才能进行重试恢复下载操作
-        if (entry.isSupportRange() && currentRetryIndex < DownloadConfig.getInstance().getMaxTask()) {
+        if (entry.isRange() && currentRetryIndex < maxRetryCount) {
             d(" thread[" + index + "] error retry " + currentRetryIndex);
             currentRetryIndex++;
             download();
         } else {
-            if (!entry.isSupportRange()) {
+            if (!entry.isRange()) {
                 //不支持断点下载 要把缓存文件删掉
                 destFile.deleteOnExit();
                 entry.reset();
             }
             entry.state = DownloadEntry.State.ERROR;
-            notifyUpdate(DownloadService.NOTIFY_ERROR);
+            notifyUpdate(DConstants.NOTIFY_ERROR);
         }
     }
 }

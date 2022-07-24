@@ -1,12 +1,14 @@
-apply plugin: 'com.android.application'
-
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
 android {
-    compileSdkVersion 31
+    compileSdk 32
 
     defaultConfig {
         applicationId "com.qw.download"
-        minSdkVersion 16
-        targetSdkVersion 31
+        minSdk 21
+        targetSdk 32
         versionCode 1
         versionName "1.0"
     }

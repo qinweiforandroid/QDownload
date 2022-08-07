@@ -9,6 +9,10 @@ import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
+
 /**
  * 下载线程
  * Created by qinwei on 2016/4/14 16:04
@@ -102,6 +106,14 @@ public class DownloadThread implements Runnable {
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(connectTimeout);
             connection.setReadTimeout(readTimeout);
+//            header配置
+//            connection.addRequestProperty("key","value");
+//            if(connection instanceof HttpsURLConnection){
+            //证书配置
+//                HttpsURLConnection https= (HttpsURLConnection) connection;
+//                https.setHostnameVerifier(HostnameVerifier);
+//                https.setSSLSocketFactory(SSLSocketFactory);
+//            }
             if (!isSingleDownload) {
                 connection.setRequestProperty("Range", "bytes=" + start + "-" + end);
             }

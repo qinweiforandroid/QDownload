@@ -3,13 +3,13 @@ QDownload是基于Android平台实现的下载框架。API简洁易上手，只�
 
 支持功能如下：
 
-1. 支持多个下载任务同时下载
-2. 单个任务支持开多个线程下载
-3. 支持断点下载，在断网、进程被划掉可恢复下载
-4. 自动校验服务器文件服务器是否支持断点下载，如果不支持则会开启单线程任务下载
-5. 支持应用全局监听下载进度回调
-6. 支持下载速度显示
-7. 支持添加下载任务，暂停下载，恢复下载，取消下载
+1. 支持添加下载任务，暂停下载，恢复下载，取消下载
+2. 支持多个下载任务同时下载
+3. 单个任务支持开多个线程下载
+4. 支持断点下载，在断网、进程被划掉可恢复下载
+5. 自动校验服务器文件服务器是否支持断点下载，如果不支持则会开启单线程任务下载
+6. 支持应用全局监听下载进度回调
+7. 支持下载速度显示
 8. 支持批量暂停，批量恢复下载
 
 先贴个效果图
@@ -24,8 +24,6 @@ QDownload是基于Android平台实现的下载框架。API简洁易上手，只�
 
 ## 1、Quick Setup
 
-### 1.1、导入依赖
-
 **Step 1.** Add it in your root build.gradle at the end of repositories
 
 ```groovy
@@ -37,11 +35,11 @@ allprojects {
 }
 ```
 
-**Step 2.** Add the dependency
+**Step 2.** Add the dependency [![](https://jitpack.io/v/qinweiforandroid/QDownload.svg)](https://jitpack.io/#qinweiforandroid/QDownload)
 
 ```groovy
 dependencies {
-  implementation 'com.github.qinweiforandroid:QDownload:1.0.0416'
+  implementation 'com.github.qinweiforandroid:QDownload:2.0.0807'
 }
 ```
 
@@ -54,101 +52,96 @@ public class MyApplication extends Application{
     @Override
     public void onCreate() {
         super.onCreate();
+        //下載全局配置
+        DownloadConfig.init(new DownloadConfig.Builder()
+                .setConnectTimeout(10000)//连接超时时间
+                .setReadTimeout(10000)//读取超时时间
+                .setMaxTask(3)//最多3个任务同时下载
+                .setMaxThread(3)//1个任务分3个线程分段下载
+                .setAutoResume(true)//启动自动恢复下载
+                .setRetryCount(3)//单个任务异常下载失败重试次数
+                .setDownloadDir(getExternalCacheDir().getAbsolutePath())
+                .builder());
         //初始化下载组件(可在子线程中做)
         DownloadManager.init(this);
     }    
 }
 ```
 
-### 1.3、核心控制器DownloadManager
-
-api如下
+**Step 4.** 添加一个下载任务
 
 ```java
-public class DownloadManager {
-    private static DownloadManager mInstance;
-    private final Context context;
+public class SingleDownloadActivity extends AppCompatActivity {
+    private DownloadWatcher watcher = new DownloadWatcher() {
+        @Override
+        protected void onChanged(DownloadFile e) {
+            if (TextUtils.equals(id, e.getId())) {
+                //更新ui
+                mSingleDownloadInfoLabel.setText(e.getId() + "\n" + e.getCurrentLength() + "/"
+                        + e.getContentLength());
+            }
+        }
+    };
     
-    private DownloadManager(Context context) {}
-    //初始化组件
-    public static void init(Context context) {}
-    //开启下载
-    public static void add(DownloadEntry entry) {}  
-    //暂停下载
-    public static void pause(DownloadEntry entry) {}    
-    //暂停所有任务
-    public static void pauseAll() {}
-    //恢复下载
-    public static void resume(DownloadEntry entry) {}   
-    //恢复所有任务
-    public static void recoverAll() {}
-}
-```
-
-### 1.4、监听下载进度
-
-需要监听下载进度可通过注册DownloadWatcher来监听下载信息的变化
-
-```java
-private DownloadWatcher watcher = new DownloadWatcher() {
-    @Override
-    protected void onDataChanged(DownloadEntiry entry) {
-	    //这里监听下载的实时信息
-        mDownloadInfoLabel.setText(entry.toString());
-        Log.e("MainActivity", entry.toString());
+    public void addDownload(){
+        //todo check perimission
+        //step 1 创建request
+        FileRequest.create(id)// 生成一个唯一id
+            .setRange(false)//不适用断点下载
+            .setName("weixin_680.apk")//设置下载的文件名称
+            .setUrl("http://gdown.baidu.com/weixin_680.apk")//设置下载链接
+            .setDir(getExternalCacheDir().getAbsolutePath())//设置下载的文件路径
+            .addDownload();//执行下载
     }
-};
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //注册下载监听器
+        DownloadManager.addObserver(watcher);
+    }
 
-@Override
-protected void onResume() {
-    super.onResume();
-    //注册观察者
-    DownloadManager.addObserver(watcher);
-}
-
-@Override
-protected void onPause() {
-    super.onPause();
-    //移除观察者
-    DownloadManager.removeObserver(watcher);
+    @Override
+    protected void onPause() {
+        super.onPause();
+        DownloadManager.removeObserver(watcher);
+    }
 }
 ```
 
-其中第**3**行 `DownloadEntiry entry` 存储了下载相关信息
+**step 5.** 获取下载文件信息
+
+可以根据下载的 **id** 获取文件信息
 
 ```java
-public class DownloadEntry implements Serializable {
-    public String id;//下载的唯一标识
-    public String url;//下载文件的url地址
-    public boolean isSupportRange;//是否支持断点续传
-    public long contentLength;//文件长度
-    public long currentLength;//已下载文件长度
-    public State state;//任务状态
-    public HashMap<Integer, Long> ranges;//存储每个线程下载开始区块
-    public int speed;//下载速度 单位s
+public static DownloadFile getFile(String id) {
+    return DownloadManager.getFile(id);
 }
 ```
 
-其中state有如下几个值
+文件信息如下：
 
 ```java
-public enum State {
-    IDLE,//空闲
-    CONNECT,//连接中(用户预取文件信息)
-    ING,//下载中
-    PAUSED,//已暂停
-    CANCELLED,//已取消
-    ERROR,//错误
-    DONE,//完成
-    WAIT//等待
+public interface DownloadFile extends Serializable {
+    String getId();//下载文件id
+    String getPath();//文件地址
+    String getUrl();//远程文件地址
+    long getCurrentLength();//当前进度
+    long getContentLength();//文件大小
+    long getSpeed();//下载速度
+    boolean isDone();//是否已下载
+    boolean isConnecting();//连接中
+    boolean isDownloading();//下载中
+    boolean isPaused();//暂停
+    boolean isWait();//等待下载
+    boolean isError();//下载失败
+    boolean isIdle();//文件处于空闲，即将下载
 }
 ```
 
 
 
-### 1.5、下载相关的操作
-
-**添加一个下载**
+## 2、入门用法
 
 通过DownloadEntry构建下载实体
 
@@ -164,38 +157,38 @@ public void addDownload(String id,String url){
 
 **暂停下载**
 
-可通过下载任务id  然后调用`DownloadManager.findById(id)` 函数获取DownloadEntry
-
 ```java
-public void pauseDownload(DownloadEntry entry){
+public void pauseDownload(String id){
     //添加一个下载任务
-    DownloadManager.pause(entry)    
+   FileRequest.create(id).pauseDownload(); 
 }
 ```
 
 **恢复下载**
+
 ```java
 public void resumeDownload(DownloadEntry entry){
-    //添加一个下载任务
-    DownloadManager.resume(entry)    
+    FileRequest.create(apk.id()).resumeDownload();
 }
 ```
 **暂停所有下载任务**
 ```java
-public void pauseAll(DownloadEntry entry){
-    //添加一个下载任务
-    DownloadManager.resume(entry)    
+public void pauseAll(){
+    DownloadManager.pauseAll(entry)    
 }
 ```
 **恢复所有下载任务**
+
 ```java
-public void recoverAll(DownloadEntry entry){
+public void recoverAll(){
     //添加一个下载任务
     DownloadManager.recoverAll(entry)    
 }
 ```
 
 
+
+## 3、项目实战
 
 1.6、应用市场apk下载的一个场景
 
@@ -222,28 +215,28 @@ public class ApkEntry {
 这是我要下载这个apk就可以这么做
 
 ```java
-public void downloadApk(ApkEntry apkEntry){
+public void downloadApk(ApkEntry apk){
     //1、先check当前apk是否在下载
-    DownloadEntry entry = DownloadManager.findById(apkEntry.id())
-    if(entry==null || entry.state==State.PAUSED || entry.state==State.ERROR || entry.state==State.CANCELLED){
-        //这四种情况：没有下载任务 || 任务是暂停 || 下载失败 || 任务已被取消
-        DownloadManager.add(entry)
+    DownloadFile file = FileRequest.getFile(apk.id());
+    if (file == null || file.isIdle()) {
+        FileRequest.create(apk.id())
+            .setName(apk.name+".apk")
+            .setUrl(apk.url)
+            .addDownload();
     }
 }
 ```
 
 暂停apk下载
 ```java
-public void pauseDownloadApk(ApkEntry apkEntry){
+public void pauseDownloadApk(ApkEntry apk){
     //1、先check当前apk是否在下载任务中
-    DownloadEntry entry = DownloadManager.findById(apkEntry.id())
-    if(entry!=null){
-        DownloadManager.pause(entry)
+    DownloadFile file = FileRequest.getFile(apk.id());
+    if(file!=null){
+        FileRequest.create(id).pauseDownload(); 
     }
 }
 ```
-
-
 
 更多功能请参考demo中实现<img src="png\519C949C.png" alt="img" style="zoom:50%;" />
 

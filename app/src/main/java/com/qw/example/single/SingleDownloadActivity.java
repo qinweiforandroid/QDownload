@@ -48,12 +48,12 @@ public class SingleDownloadActivity extends BaseActivity {
             public void onClick(View view) {
                 mSingleDownloadAddBtn.setEnabled(false);
                 mSingleDownloadStopBtn.setEnabled(true);
-                FileRequest.create(id)
-                        .setRange(false)
-                        .setName("weixin_680.apk")
-                        .setUrl("http://gdown.baidu.com/data/wisegame/a2216288661d09b4/weixin_680.apk")
-                        .setDir(getExternalCacheDir().getAbsolutePath())
-                        .addDownload();
+                FileRequest.create(id)//创建request 生成一个唯一id
+                        .setRange(false)//不适用断点下载
+                        .setName("weixin_680.apk")//设置下载的文件名称
+                        .setUrl("http://gdown.baidu.com/weixin_680.apk")//设置下载链接
+                        .setDir(getExternalCacheDir().getAbsolutePath())//设置下载的文件路径
+                        .addDownload();//执行下载
             }
         });
         mSingleDownloadStopBtn.setOnClickListener(new View.OnClickListener() {

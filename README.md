@@ -3,14 +3,14 @@ QDownload是基于Android平台实现的下载框架。API简洁易上手，只�
 
 支持功能如下：
 
-* 支持多个下载任务同时下载
-* 单个任务支持开多个线程下载
-* 支持断点下载，在断网、进程被划掉可恢复下载
-* 自动校验服务器文件服务器是否支持断点下载，如果不支持则会开启单线程任务下载
-* 支持应用全局监听下载进度回调
-* 支持下载速度显示
-* 支持添加下载任务，暂停下载，恢复下载，取消下载
-* 支持批量暂停，批量恢复下载
+1. 支持多个下载任务同时下载
+2. 单个任务支持开多个线程下载
+3. 支持断点下载，在断网、进程被划掉可恢复下载
+4. 自动校验服务器文件服务器是否支持断点下载，如果不支持则会开启单线程任务下载
+5. 支持应用全局监听下载进度回调
+6. 支持下载速度显示
+7. 支持添加下载任务，暂停下载，恢复下载，取消下载
+8. 支持批量暂停，批量恢复下载
 
 先贴个效果图
 
@@ -22,21 +22,19 @@ QDownload是基于Android平台实现的下载框架。API简洁易上手，只�
 
  <img src="https://img-blog.csdnimg.cn/img_convert/709186fda0c9011c60e5daa9641b161f.png"   width="30%">
 
-## 1、如何使用
-
-
+## 1、Quick Setup
 
 ### 1.1、导入依赖
 
 **Step 1.** Add it in your root build.gradle at the end of repositories
 
 ```groovy
-	allprojects {
-		repositories {
-			...
-			maven { url 'https://jitpack.io' }
-		}
-	}
+allprojects {
+    repositories {
+        ...
+            maven { url 'https://jitpack.io' }
+    }
+}
 ```
 
 **Step 2.** Add the dependency
@@ -47,7 +45,9 @@ dependencies {
 }
 ```
 
-### 1.2、初始化下载组件
+**Step 3.** init
+
+在application中初始化
 
 ```java
 public class MyApplication extends Application{

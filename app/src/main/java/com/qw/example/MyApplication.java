@@ -2,7 +2,7 @@ package com.qw.example;
 
 import android.app.Application;
 
-import com.qw.download.DownloadManager;
+import com.qw.download.manager.DownloadManager;
 
 
 /**

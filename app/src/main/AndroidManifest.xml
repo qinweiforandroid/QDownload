@@ -30,11 +30,11 @@
         </activity>
 
         <activity
-            android:name=".MultithreadDownloadListActivity"
+            android:name=".multithreading.MultithreadDownloadListActivity"
             android:exported="true"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".SingleDownloadActivity"
+            android:name=".single.SingleDownloadActivity"
             android:exported="true"
             android:screenOrientation="portrait" />
 

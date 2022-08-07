@@ -9,8 +9,10 @@ import androidx.annotation.Nullable;
 import android.view.View;
 import android.widget.TextView;
 
-import com.qw.download.DownloadConfig;
-import com.qw.example.core.BaseActivity;
+import com.qw.download.manager.DownloadConfig;
+import com.qw.example.base.BaseActivity;
+import com.qw.example.multithreading.MultithreadDownloadListActivity;
+import com.qw.example.single.SingleDownloadActivity;
 import com.qw.permission.OnRequestPermissionsResultListener;
 import com.qw.permission.Permission;
 import com.qw.permission.PermissionResult;
@@ -40,7 +42,7 @@ public class HomeActivity extends BaseActivity {
 
     @Override
     protected void setContentView() {
-        setContentView(R.layout.activity_home, false);
+        setContentView(R.layout.home_activity, false);
     }
 
     @Override

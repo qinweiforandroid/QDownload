@@ -39,7 +39,10 @@ allprojects {
 
 ```groovy
 dependencies {
+  //核心库
   implementation 'com.github.qinweiforandroid:QDownload:2.0.0807'
+  //多任务下载管理
+  implementation 'com.github.qinweiforandroid.QDownload:download-manager:2.0.0807'
 }
 ```
 

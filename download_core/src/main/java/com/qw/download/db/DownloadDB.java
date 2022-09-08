@@ -129,17 +129,17 @@ public class DownloadDB {
         return es;
     }
 
-    public boolean delete(String id) {
+    public synchronized boolean delete(String id) {
         long number = getDB().delete(DownloadDBHelper.DB_TABLE, "id=?",
                 new String[]{id});
         return number > 0;
     }
 
-    public boolean delete(DownloadEntry e) {
+    public synchronized boolean delete(DownloadEntry e) {
         return delete(e.id);
     }
 
-    public boolean delete(ArrayList<DownloadEntry> es) {
+    public synchronized boolean delete(ArrayList<DownloadEntry> es) {
         String[] ids = new String[es.size()];
         for (int i = 0; i < es.size(); i++) {
             ids[i] = es.get(i).id;
@@ -148,7 +148,7 @@ public class DownloadDB {
         return number > 0;
     }
 
-    public boolean deleteAll() {
+    public synchronized boolean deleteAll() {
         long number = getDB().delete(DownloadDBHelper.DB_TABLE, null, null);
         return number > 0;
     }

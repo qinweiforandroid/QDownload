@@ -33,7 +33,7 @@ public class DownloadThread implements Runnable {
     private int connectTimeout;
     private int readTimeout;
 
-    public DownloadThread(String url, File destFile, int threadIndex, long start, long end, OnDownloadListener listener) {
+    public DownloadThread(String id, String url, File destFile, int threadIndex, long start, long end, OnDownloadListener listener) {
         this.url = url;
         this.destFile = destFile;
         this.index = threadIndex;
@@ -45,7 +45,7 @@ public class DownloadThread implements Runnable {
             isSingleDownload = false;
         }
         this.listener = listener;
-        d("thread[" + threadIndex + "] start-end:" + start + "/" + end);
+        d(id + " thread[" + threadIndex + "] start-end:" + start + "/" + end);
     }
 
     public void setConnectTimeout(int time) {

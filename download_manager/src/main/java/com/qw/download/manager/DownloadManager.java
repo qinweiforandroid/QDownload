@@ -42,6 +42,10 @@ public class DownloadManager {
             DownloadConfig.getInstance().getDao().init(context.getApplicationContext());
             ArrayList<DownloadEntry> entries = DownloadConfig.getInstance().getDao().queryAll();
             DownloadChanger.getInstance().setDownloadEntries(entries);
+            if (DownloadConfig.getInstance().isAutoResume()) {
+                Intent intent = new Intent(mInstance.context, DownloadService.class);
+                context.startService(intent);
+            }
         }
     }
 

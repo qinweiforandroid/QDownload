@@ -19,6 +19,7 @@ public class DownloadConfig {
     private int read_timeout;
     private String downloadDir;
     private boolean autoResume;
+    private boolean debug;
     private IDownloadDao dao = new DownloadDao();
 
     public synchronized static DownloadConfig getInstance() {
@@ -31,6 +32,7 @@ public class DownloadConfig {
     public static void init(DownloadConfig config) {
         if (mInstance == null) {
             mInstance = config;
+            DLog.setDebug(mInstance.debug);
         }
     }
 
@@ -77,6 +79,7 @@ public class DownloadConfig {
         private int read_timeout = 10 * 1000;
         private boolean autoResume;
         private String downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath();
+        private boolean debug;
 
         public Builder setMaxTask(int count) {
             this.max_tasks = count;
@@ -113,6 +116,11 @@ public class DownloadConfig {
             return this;
         }
 
+        public Builder setDebug(boolean debug) {
+            this.debug = debug;
+            return this;
+        }
+
         public DownloadConfig builder() {
             DownloadConfig config = new DownloadConfig();
             config.max_tasks = max_tasks;
@@ -122,6 +130,7 @@ public class DownloadConfig {
             config.read_timeout = read_timeout;
             config.downloadDir = downloadDir;
             config.autoResume = autoResume;
+            config.debug = this.debug;
             return config;
         }
     }

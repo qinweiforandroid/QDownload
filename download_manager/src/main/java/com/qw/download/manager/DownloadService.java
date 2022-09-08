@@ -92,6 +92,11 @@ public class DownloadService extends Service {
                 switch (entryEntry.getValue().state) {
                     case ING:
                     case WAIT:
+                        d("recover " + entryEntry.getValue().id + " " +
+                                entryEntry.getValue().currentLength + "/" +
+                                entryEntry.getValue().contentLength + " ranges:" +
+                                entryEntry.getValue().ranges.size() + " state " +
+                                entryEntry.getValue().state.name());
                         add(entryEntry.getValue());
                         break;
                 }

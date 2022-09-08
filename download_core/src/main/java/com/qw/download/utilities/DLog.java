@@ -9,7 +9,11 @@ import android.util.Log;
  */
 public class DLog {
     public static final String TAG = "QDownload";
-    public static boolean debug = false;
+    private static boolean debug = false;
+
+    public static void setDebug(boolean debug) {
+        DLog.debug = debug;
+    }
 
     public static void d(String msg) {
         if (debug) {

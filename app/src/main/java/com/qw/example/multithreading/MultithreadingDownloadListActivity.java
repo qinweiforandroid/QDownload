@@ -22,7 +22,7 @@ import com.bumptech.glide.Glide;
 import com.qw.download.DownloadInfo;
 import com.qw.download.manager.DownloadManager;
 import com.qw.download.manager.DownloadWatcher;
-import com.qw.download.manager.FileRequest;
+import com.qw.download.manager.FileDownload;
 import com.qw.example.base.BaseActivity;
 import com.qw.example.base.QProgress;
 import com.qw.example.R;
@@ -169,32 +169,36 @@ public class MultithreadingDownloadListActivity extends BaseActivity {
             mDownloadTitleLabel.setText(apk.name);
             mDownloadStateLabel.setText("");
             mDownloadProgressDesLabel.setText("");
-            DownloadInfo file = FileRequest.getFile(apk.id());
-            if (file != null) {
-                mDownloadStateLabel.setText(formatSize(file.getSpeed()) + "/s");
-                mDownloadProgressDesLabel.setText(formatSize(file.getCurrentLength()) + "/" + formatSize(file.getContentLength()));
-                if (file.getContentLength() == 0L) {
+            DownloadInfo info = FileDownload.getInfo(apk.id());
+            if (info != null) {
+                mDownloadStateLabel.setText(formatSize(info.getSpeed()) + "/s");
+                mDownloadProgressDesLabel.setText(formatSize(info.getCurrentLength()) + "/" + formatSize(info.getContentLength()));
+                if (info.getContentLength() == 0L) {
                     mDownloadProgress.setMax(1);
                     mDownloadProgress.notifyDataChanged(0);
                 } else {
-                    mDownloadProgress.setMax((int) file.getContentLength());
-                    mDownloadProgress.notifyDataChanged((int) file.getCurrentLength());
+                    mDownloadProgress.setMax((int) info.getContentLength());
+                    mDownloadProgress.notifyDataChanged((int) info.getCurrentLength());
                 }
             }
-            if (file == null || file.isIdle()) {
+
+            if (info == null || info.isIdle()) {
                 mDownloadLabel.setText("下载");
-            } else if (file.isPaused()) {
+            } else if (info.isPaused()) {
                 mDownloadLabel.setText("继续");
                 mDownloadStateLabel.setText("已暂停");
-            } else if (file.isWait()) {
+            } else if (info.isWait()) {
                 mDownloadLabel.setText("等待");
-            } else if (file.isConnecting() || file.isDownloading()) {
+            } else if (info.isConnecting()) {
+                mDownloadStateLabel.setText("连接中...");
                 mDownloadLabel.setText("暂停");
-            } else if (file.isError()) {
+            } else if (info.isDownloading()) {
+                mDownloadLabel.setText("暂停");
+            } else if (info.isError()) {
                 mDownloadLabel.setText("重试");
-            } else if (file.isIdle()) {
+            } else if (info.isIdle()) {
                 mDownloadLabel.setText("下载");
-            } else if (file.isDone()) {
+            } else if (info.isDone()) {
                 mDownloadLabel.setText("打开");
                 mDownloadStateLabel.setText("已完成");
             }
@@ -203,19 +207,21 @@ public class MultithreadingDownloadListActivity extends BaseActivity {
 
         @Override
         public void onClick(View v) {
-            DownloadInfo file = FileRequest.getFile(apk.id());
-            if (file == null || file.isIdle()) {
-                FileRequest.create(apk.id())
+            String id = apk.id();
+            DownloadInfo info = FileDownload.getInfo(id);
+
+            if (info == null || info.isIdle()) {
+                new FileDownload.Builder(id)
                         .setName(apk.name + ".apk")
                         .setUrl(apk.url)
-                        .addDownload();
-            } else if (file.isPaused() || file.isError()) {
-                FileRequest.create(apk.id()).resumeDownload();
-            } else if (file.isConnecting() || file.isDownloading() || file.isWait()) {
+                        .add();
+            } else if (info.isPaused() || info.isError()) {
+                FileDownload.resume(id);
+            } else if (info.isConnecting() || info.isDownloading() || info.isWait()) {
                 mDownloadLabel.setText("暂停");
-                FileRequest.create(apk.id()).pauseDownload();
-            } else if (file.isDone()) {
-                File apkFile = new File(file.getPath());
+                FileDownload.pause(id);
+            } else if (info.isDone()) {
+                File apkFile = new File(info.getPath());
                 if (!apkFile.exists()) {
                     Toast.makeText(MultithreadingDownloadListActivity.this, "文件已被删除！", Toast.LENGTH_SHORT).show();
                     return;

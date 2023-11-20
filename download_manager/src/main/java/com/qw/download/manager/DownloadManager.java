@@ -27,16 +27,7 @@ public class DownloadManager {
 
     private static void checkInit() {
         if (mInstance == null) {
-            throw new IllegalArgumentException("downloadManager not init");
-        }
-    }
-
-    private static void d(String msg) {
-        DLog.d(TAG + "--> " + msg);
-    }
-
-    public static void init(Context context) {
-        if (mInstance == null) {
+            Context context = DownloadConfig.getInstance().getContext();
             mInstance = new DownloadManager(context);
             DownloadConfig.getInstance().getDao().init(context.getApplicationContext());
             ArrayList<DownloadEntry> entries = DownloadConfig.getInstance().getDao().queryAll();
@@ -48,20 +39,27 @@ public class DownloadManager {
         }
     }
 
-    private static DownloadEntry build(FileRequest request) {
-        DownloadEntry obtain = DownloadEntry.obtain(request.getId(), request.getUrl());
-        obtain.setDir(request.getDir())
-                .setName(request.getName())
-                .setRange(request.isRange());
+    private static void d(String msg) {
+        DLog.d(TAG + "--> " + msg);
+    }
+
+    private static DownloadEntry build(FileDownload fileDownload) {
+        DownloadEntry obtain = DownloadEntry.obtain(fileDownload.getId(), fileDownload.getUrl());
+        obtain.setDir(fileDownload.getDir())
+                .setName(fileDownload.getName())
+                .setRange(fileDownload.isRange());
         return obtain;
     }
 
     /**
      * 开启下载
      */
-    public static void add(FileRequest request) {
+    public static void add(FileDownload fileDownload) {
         checkInit();
-        DownloadEntry entry = build(request);
+        add(build(fileDownload));
+    }
+
+    public static void add(DownloadEntry entry) {
         d(entry.id + " add");
         Intent intent = new Intent(mInstance.context, DownloadService.class);
         intent.putExtra(DConstants.KEY_ENTRY, entry);
@@ -147,7 +145,7 @@ public class DownloadManager {
         return DownloadChanger.getInstance().get(id);
     }
 
-    public static DownloadInfo getFile(String id) {
+    public static DownloadInfo getFileInfo(String id) {
         DownloadEntry entry = findById(id);
         if (entry == null) {
             return null;

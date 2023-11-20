@@ -1,5 +1,6 @@
 package com.qw.download.manager;
 
+import android.content.Context;
 import android.os.Environment;
 
 import com.qw.download.core.HttpURLConnectionListener;
@@ -20,14 +21,16 @@ public class DownloadConfig {
     private int read_timeout;
     private String downloadDir;
     private boolean autoResume;
-    private boolean debug;
+    private boolean logEnable;
+    private Context context;
+
     private IDownloadDao dao = new DownloadDao();
 
     private HttpURLConnectionListener httpURLConnectionListener;
 
     public synchronized static DownloadConfig getInstance() {
         if (mInstance == null) {
-            init(new Builder().builder());
+            throw new IllegalArgumentException("must be call init method to config");
         }
         return mInstance;
     }
@@ -35,7 +38,7 @@ public class DownloadConfig {
     public static void init(DownloadConfig config) {
         if (mInstance == null) {
             mInstance = config;
-            DLog.setDebug(mInstance.debug);
+            DLog.setDebug(mInstance.logEnable);
         }
     }
 
@@ -78,14 +81,26 @@ public class DownloadConfig {
         return httpURLConnectionListener;
     }
 
+    public Context getContext() {
+        return context;
+    }
+
     public static class Builder {
+        private Context context;
+
+        public Builder(Context context) {
+            this.context = context.getApplicationContext();
+            //默认下载文件存在cache dir 目录
+            this.downloadDir = context.getCacheDir().getPath();
+        }
+
         private int max_tasks = 3;
         private int max_threads = 2;
         private int max_retry_count = 3;
         private int connect_timeout = 10 * 1000;
         private int read_timeout = 10 * 1000;
         private boolean autoResume;
-        private String downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath();
+        private String downloadDir;
         private boolean logEnable;
         private HttpURLConnectionListener httpURLConnectionListener;
 
@@ -94,8 +109,9 @@ public class DownloadConfig {
             return this;
         }
 
-        public void setHttpURLConnectionListener(HttpURLConnectionListener httpURLConnectionListener) {
+        public Builder setHttpURLConnectionListener(HttpURLConnectionListener httpURLConnectionListener) {
             this.httpURLConnectionListener = httpURLConnectionListener;
+            return this;
         }
 
         public Builder setMaxThread(int count) {
@@ -135,6 +151,7 @@ public class DownloadConfig {
 
         public DownloadConfig builder() {
             DownloadConfig config = new DownloadConfig();
+            config.context = context;
             config.max_tasks = max_tasks;
             config.max_threads = max_threads;
             config.max_retry_count = max_retry_count;
@@ -142,7 +159,7 @@ public class DownloadConfig {
             config.read_timeout = read_timeout;
             config.downloadDir = downloadDir;
             config.autoResume = autoResume;
-            config.debug = this.logEnable;
+            config.logEnable = this.logEnable;
             config.httpURLConnectionListener = httpURLConnectionListener;
             return config;
         }

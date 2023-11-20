@@ -9,7 +9,7 @@ import android.widget.TextView;
 import com.qw.download.DownloadInfo;
 import com.qw.download.manager.DownloadManager;
 import com.qw.download.manager.DownloadWatcher;
-import com.qw.download.manager.FileRequest;
+import com.qw.download.manager.FileDownload;
 import com.qw.example.R;
 import com.qw.example.base.BaseActivity;
 
@@ -40,29 +40,27 @@ public class SingleDownloadActivity extends BaseActivity {
 
     @Override
     protected void initializeView() {
-        mSingleDownloadInfoLabel = (TextView) findViewById(R.id.mSingleDownloadInfoLabel);
-        mSingleDownloadAddBtn = (Button) findViewById(R.id.mSingleDownloadAddBtn);
-        mSingleDownloadStopBtn = (Button) findViewById(R.id.mSingleDownloadPauseBtn);
-        mSingleDownloadAddBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mSingleDownloadAddBtn.setEnabled(false);
-                mSingleDownloadStopBtn.setEnabled(true);
-                FileRequest.create(id)//创建request 生成一个唯一id
-                        .setRange(false)//不适用断点下载
-                        .setName("weixin_680.apk")//设置下载的文件名称
-                        .setUrl("http://gdown.baidu.com/weixin_680.apk")//设置下载链接
-                        .setDir(getExternalCacheDir().getAbsolutePath())//设置下载的文件路径
-                        .addDownload();//执行下载
-            }
+        mSingleDownloadInfoLabel = findViewById(R.id.mSingleDownloadInfoLabel);
+        mSingleDownloadAddBtn = findViewById(R.id.mSingleDownloadAddBtn);
+        mSingleDownloadStopBtn = findViewById(R.id.mSingleDownloadPauseBtn);
+        mSingleDownloadAddBtn.setOnClickListener(view -> {
+            mSingleDownloadAddBtn.setEnabled(false);
+            mSingleDownloadStopBtn.setEnabled(true);
+            //创建request 生成一个唯一id
+            new FileDownload.Builder(id)
+                    //不启用断点下载
+                    .setRange(false)
+                    //设置下载的文件名称
+                    .setName("weixin_680.apk")
+                    //设置下载链接
+                    .setUrl("http://gdown.baidu.com/weixin_680.apk")
+                    .setDir(getExternalCacheDir().getAbsolutePath())//设置下载的文件路径
+                    .add();
         });
-        mSingleDownloadStopBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mSingleDownloadAddBtn.setEnabled(true);
-                mSingleDownloadStopBtn.setEnabled(false);
-                FileRequest.create(id).pauseDownload();
-            }
+        mSingleDownloadStopBtn.setOnClickListener(view -> {
+            mSingleDownloadAddBtn.setEnabled(true);
+            mSingleDownloadStopBtn.setEnabled(false);
+            FileDownload.pause(id);
         });
         mSingleDownloadStopBtn.setEnabled(false);
     }

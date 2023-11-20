@@ -88,18 +88,18 @@ public class MultithreadDownloadListActivity extends BaseActivity {
         setTitle("多任务多线程断点下载");
         modules.addAll(gen());
         adapter.notifyDataSetChanged();
-        Permission.Companion.init(this)
-                .permissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE})
-                .setOnRequestPermissionsResultListener(new OnRequestPermissionsResultListener() {
-                    @Override
-                    public void onRequestPermissionsResult(@NotNull PermissionResult permissionResult) {
-                        if (!permissionResult.isGrant()) {
-                            Toast.makeText(MultithreadDownloadListActivity.this, "需要sdcard读写权限", Toast.LENGTH_SHORT).show();
-                            finish();
-                        }
-                    }
-                })
-                .request();
+//        Permission.Companion.init(this)
+//                .permissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE})
+//                .setOnRequestPermissionsResultListener(new OnRequestPermissionsResultListener() {
+//                    @Override
+//                    public void onRequestPermissionsResult(@NotNull PermissionResult permissionResult) {
+//                        if (!permissionResult.isGrant()) {
+//                            Toast.makeText(MultithreadDownloadListActivity.this, "需要sdcard读写权限", Toast.LENGTH_SHORT).show();
+//                            finish();
+//                        }
+//                    }
+//                })
+//                .request();
     }
 
     private ArrayList<ApkEntry> gen() {

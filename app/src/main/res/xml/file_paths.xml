@@ -3,7 +3,7 @@
     <!-- 表示Context.getCacheDir()目录或者其子目录。 示例 : /data/data/com.chen.gradle/cache/file-->
     <cache-path
         name="name_cache_path"
-        path="file" />
+        path="/" />
 
     <external-cache-path
         name="name_external_cache_path"
@@ -11,4 +11,5 @@
     <external-path
         name="mDownload"
         path="Download" />
+
 </paths>

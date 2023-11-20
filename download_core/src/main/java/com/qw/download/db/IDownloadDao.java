@@ -2,6 +2,8 @@ package com.qw.download.db;
 
 import android.content.Context;
 
+import com.qw.download.db.dto.DownloadEntry;
+
 import java.util.ArrayList;
 
 public interface IDownloadDao {

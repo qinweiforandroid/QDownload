@@ -1,14 +1,18 @@
 package com.qw.download;
 
 
+import android.os.SystemClock;
+
 import androidx.annotation.RestrictTo;
 
+import com.qw.download.core.AbsDownloadThread;
 import com.qw.download.core.ConnectThread;
-import com.qw.download.core.DownloadThread;
-import com.qw.download.db.DownloadEntry;
-import com.qw.download.db.DownloadState;
+import com.qw.download.core.HttpURLConnectionListener;
+import com.qw.download.core.MultiDownloadThread;
+import com.qw.download.core.SingleDownloadThread;
+import com.qw.download.db.dto.DownloadEntry;
+import com.qw.download.db.dto.DownloadState;
 import com.qw.download.db.IDownloadDao;
-import com.qw.download.entities.DownloadFile;
 import com.qw.download.utilities.DConstants;
 import com.qw.download.utilities.DLog;
 import com.qw.download.utilities.TickTack;
@@ -23,7 +27,7 @@ import java.util.concurrent.ExecutorService;
  * email:qinwei_it@163.com
  */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public class DownloadTask implements ConnectThread.OnConnectThreadListener, DownloadThread.OnDownloadListener {
+public class DownloadTask implements ConnectThread.OnConnectThreadListener, AbsDownloadThread.OnDownloadListener {
     private final static String TAG = "Task";
     private ExecutorService mExecutors;
     private int maxThreads = 1;
@@ -31,13 +35,14 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
     private int connectTimeout;
     private int readTimeout;
     private volatile DownloadEntry entry;
-    private volatile DownloadThread[] threads;
+    private volatile AbsDownloadThread[] threads;
     private volatile DownloadState[] states;
     private volatile ConnectThread connectThread;
     private final File destFile;
     private final TickTack mSpeedTickTack;
     private final TickTack mProgressTickTack;
     private volatile int currentRetryIndex;
+    private HttpURLConnectionListener httpURLConnectionListener;
     private OnDownloadTaskListener listener;
     private IDownloadDao dao;
 
@@ -53,6 +58,11 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
 
     public void setDao(IDownloadDao dao) {
         this.dao = dao;
+    }
+
+
+    public void setHttpURLConnectionListener(HttpURLConnectionListener httpURLConnectionListener) {
+        this.httpURLConnectionListener = httpURLConnectionListener;
     }
 
     public void setOnDownloadTaskListener(OnDownloadTaskListener listener) {
@@ -90,6 +100,7 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
         connectThread = new ConnectThread(entry.url, this);
         connectThread.setConnectTimeout(connectTimeout);
         connectThread.setReadTimeout(readTimeout);
+        connectThread.setHttpURLConnectionListener(httpURLConnectionListener);
         entry.state = DownloadState.CONNECT;
         mExecutors.execute(connectThread);
         notifyUpdate(DConstants.NOTIFY_CONNECTING);
@@ -102,21 +113,25 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
     public void pause() {
         d("pause");
         if (connectThread != null && connectThread.isRunning()) {
+            //连接中被取消
             connectThread.cancel();
-        } else {
-            if (!entry.isRange()) {
-                //单线程下载不支持暂停操作
-                cancel();
-                return;
-            }
+            entry.state = DownloadState.PAUSED;
+            notifyUpdate(DConstants.NOTIFY_PAUSED);
+            return;
+        }
+        if (entry.isRange()) {
+            //暂停多线程下载
             for (int i = 0; i < threads.length; i++) {
                 if (threads[i] != null && threads[i].isRunning()) {
                     threads[i].pause();
                 }
             }
+            entry.state = DownloadState.PAUSED;
+            notifyUpdate(DConstants.NOTIFY_PAUSED);
+        } else {
+            //单线程下载不支持暂停操作，所以取消
+            cancel();
         }
-        entry.state = DownloadState.PAUSED;
-        notifyUpdate(DConstants.NOTIFY_PAUSED);
     }
 
     public void cancel() {
@@ -157,7 +172,7 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
 
     private void multithreadingDownload() {
         d("startMultithreadingDownload");
-        threads = new DownloadThread[maxThreads];
+        threads = new MultiDownloadThread[maxThreads];
         states = new DownloadState[maxThreads];
         long start;
         long end;
@@ -176,7 +191,7 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
                 end = (int) entry.contentLength;
             }
             if (start < end) {
-                threads[i] = new DownloadThread(entry.id, entry.url, destFile, i, start, end, this);
+                threads[i] = new MultiDownloadThread(entry.id, entry.url, destFile, i, start, end, this);
                 threads[i].setConnectTimeout(connectTimeout);
                 threads[i].setReadTimeout(readTimeout);
                 states[i] = DownloadState.ING;
@@ -189,9 +204,10 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
 
     private void singleThreadDownload() {
         d("startSingleThreadDownload");
-        threads = new DownloadThread[1];
+        threads = new SingleDownloadThread[1];
         states = new DownloadState[1];
-        threads[0] = new DownloadThread(entry.id, entry.url, destFile, 0, 0, 0, this);
+        threads[0] = new SingleDownloadThread(entry.id, entry.url, destFile, this);
+        ((SingleDownloadThread) threads[0]).setHttpURLConnectionListener(httpURLConnectionListener);
         threads[0].setConnectTimeout(connectTimeout);
         threads[0].setReadTimeout(readTimeout);
         states[0] = DownloadState.ING;
@@ -210,7 +226,7 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
     }
 
     public interface OnDownloadTaskListener {
-        void onTaskUpdate(int what, DownloadFile file);
+        void onTaskUpdate(int what, DownloadInfo file);
     }
 
     @Override
@@ -245,7 +261,7 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
     private volatile long timestamp;
 
     private void initDownloadTempData() {
-        timestamp = System.currentTimeMillis();
+        timestamp = SystemClock.elapsedRealtime();
         tempCurrentLength = entry.currentLength;
     }
 
@@ -256,11 +272,12 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, Down
             entry.ranges.put(index, entry.ranges.get(index) + progress);
         }
         if (mSpeedTickTack.needToNotify()) {
+            long now = SystemClock.elapsedRealtime();
             //计算下载速度
-            float time = (System.currentTimeMillis() - timestamp) / 1000f;
+            float time = (now - timestamp) / 1000f;
             entry.speed = (int) ((entry.currentLength - tempCurrentLength) / time);
             tempCurrentLength = entry.currentLength;
-            timestamp = System.currentTimeMillis();
+            timestamp = now;
         }
         if (mProgressTickTack.needToNotify()) {
             d("thread[" + index + "] progress " + entry.currentLength + "/" + entry.contentLength + " speed:" + entry.speed + "/s");

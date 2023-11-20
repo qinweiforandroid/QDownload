@@ -15,7 +15,6 @@ public class MultiDownloadThread extends AbsDownloadThread {
     private final long start;
     private final long end;
 
-
     public MultiDownloadThread(String id, String url, File destFile, int threadIndex, long start, long end, OnDownloadListener listener) {
         super(id, url, destFile, listener);
         this.index = threadIndex;
@@ -23,7 +22,6 @@ public class MultiDownloadThread extends AbsDownloadThread {
         this.end = end;
         d(id + " thread[" + threadIndex + "] start-end:" + start + "/" + end);
     }
-
 
     @Override
     public void run() {
@@ -36,6 +34,7 @@ public class MultiDownloadThread extends AbsDownloadThread {
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(connectTimeout);
             connection.setReadTimeout(readTimeout);
+            config(connection);
 //            header配置
 //            connection.addRequestProperty("key","value");
 //            if(connection instanceof HttpsURLConnection){
@@ -44,6 +43,7 @@ public class MultiDownloadThread extends AbsDownloadThread {
 //                https.setHostnameVerifier(HostnameVerifier);
 //                https.setSSLSocketFactory(SSLSocketFactory);
 //            }
+            connection.setRequestProperty("Range", "bytes=" + start + "-" + end);
             InputStream is;
             int code = connection.getResponseCode();
             if (code == HttpURLConnection.HTTP_PARTIAL) {

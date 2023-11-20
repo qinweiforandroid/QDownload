@@ -6,7 +6,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.qw.download.entities.DownloadFile;
+import com.qw.download.DownloadInfo;
 import com.qw.download.manager.DownloadManager;
 import com.qw.download.manager.DownloadWatcher;
 import com.qw.download.manager.FileRequest;
@@ -23,7 +23,7 @@ public class SingleDownloadActivity extends BaseActivity {
     private Button mSingleDownloadStopBtn;
     private DownloadWatcher watcher = new DownloadWatcher() {
         @Override
-        protected void onChanged(DownloadFile e) {
+        protected void onChanged(DownloadInfo e) {
             if (TextUtils.equals(id, e.getId())) {
                 mSingleDownloadInfoLabel.setText(e.getId() + "\n" + e.getCurrentLength() + "/"
                         + e.getContentLength());

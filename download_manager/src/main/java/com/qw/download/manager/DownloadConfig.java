@@ -2,7 +2,8 @@ package com.qw.download.manager;
 
 import android.os.Environment;
 
-import com.qw.download.db.DownloadDao;
+import com.qw.download.core.HttpURLConnectionListener;
+import com.qw.download.db.sqlite.impl.DownloadDao;
 import com.qw.download.db.IDownloadDao;
 import com.qw.download.utilities.DLog;
 
@@ -21,6 +22,8 @@ public class DownloadConfig {
     private boolean autoResume;
     private boolean debug;
     private IDownloadDao dao = new DownloadDao();
+
+    private HttpURLConnectionListener httpURLConnectionListener;
 
     public synchronized static DownloadConfig getInstance() {
         if (mInstance == null) {
@@ -71,6 +74,10 @@ public class DownloadConfig {
         return dao;
     }
 
+    public HttpURLConnectionListener getHttpURLConnectionListener() {
+        return httpURLConnectionListener;
+    }
+
     public static class Builder {
         private int max_tasks = 3;
         private int max_threads = 2;
@@ -79,11 +86,16 @@ public class DownloadConfig {
         private int read_timeout = 10 * 1000;
         private boolean autoResume;
         private String downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath();
-        private boolean debug;
+        private boolean logEnable;
+        private HttpURLConnectionListener httpURLConnectionListener;
 
         public Builder setMaxTask(int count) {
             this.max_tasks = count;
             return this;
+        }
+
+        public void setHttpURLConnectionListener(HttpURLConnectionListener httpURLConnectionListener) {
+            this.httpURLConnectionListener = httpURLConnectionListener;
         }
 
         public Builder setMaxThread(int count) {
@@ -116,8 +128,8 @@ public class DownloadConfig {
             return this;
         }
 
-        public Builder setDebug(boolean debug) {
-            this.debug = debug;
+        public Builder setLogEnable(boolean logEnable) {
+            this.logEnable = logEnable;
             return this;
         }
 
@@ -130,7 +142,8 @@ public class DownloadConfig {
             config.read_timeout = read_timeout;
             config.downloadDir = downloadDir;
             config.autoResume = autoResume;
-            config.debug = this.debug;
+            config.debug = this.logEnable;
+            config.httpURLConnectionListener = httpURLConnectionListener;
             return config;
         }
     }

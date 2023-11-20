@@ -3,8 +3,8 @@ package com.qw.download.manager;
 import android.content.Context;
 import android.content.Intent;
 
-import com.qw.download.db.DownloadEntry;
-import com.qw.download.entities.DownloadFile;
+import com.qw.download.db.dto.DownloadEntry;
+import com.qw.download.DownloadInfo;
 import com.qw.download.utilities.DConstants;
 import com.qw.download.utilities.DLog;
 
@@ -20,7 +20,6 @@ public class DownloadManager {
     public static final String TAG = "DownloadManager";
     private static DownloadManager mInstance;
     private final Context context;
-
 
     private DownloadManager(Context context) {
         this.context = context.getApplicationContext();
@@ -148,7 +147,7 @@ public class DownloadManager {
         return DownloadChanger.getInstance().get(id);
     }
 
-    public static DownloadFile getFile(String id) {
+    public static DownloadInfo getFile(String id) {
         DownloadEntry entry = findById(id);
         if (entry == null) {
             return null;

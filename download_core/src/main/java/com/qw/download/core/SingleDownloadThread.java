@@ -18,15 +18,6 @@ public class SingleDownloadThread extends AbsDownloadThread {
         super(id, url, destFile, listener);
     }
 
-    public void setConnectTimeout(int time) {
-        this.connectTimeout = time;
-    }
-
-    public void setReadTimeout(int time) {
-        this.readTimeout = time;
-    }
-
-
     @Override
     public void run() {
         isRunning = true;
@@ -38,17 +29,10 @@ public class SingleDownloadThread extends AbsDownloadThread {
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(connectTimeout);
             connection.setReadTimeout(readTimeout);
-//            header配置
-//            connection.addRequestProperty("key","value");
-//            if(connection instanceof HttpsURLConnection){
-            //证书配置
-//                HttpsURLConnection https= (HttpsURLConnection) connection;
-//                https.setHostnameVerifier(HostnameVerifier);
-//                https.setSSLSocketFactory(SSLSocketFactory);
-//            }
+            config(connection);
             InputStream is;
             int code = connection.getResponseCode();
-            if (code == HttpURLConnection.HTTP_OK) {
+            if (code >= 200 && code < 300) {
                 FileOutputStream fos = new FileOutputStream(destFile);
                 is = connection.getInputStream();
                 byte[] buffer = new byte[2048];

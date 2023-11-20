@@ -9,9 +9,9 @@ import android.os.Message;
 import android.text.TextUtils;
 
 import com.qw.download.DownloadTask;
-import com.qw.download.db.DownloadEntry;
-import com.qw.download.db.DownloadState;
-import com.qw.download.entities.DownloadFile;
+import com.qw.download.db.dto.DownloadEntry;
+import com.qw.download.db.dto.DownloadState;
+import com.qw.download.DownloadInfo;
 import com.qw.download.utilities.DConstants;
 import com.qw.download.utilities.DLog;
 import com.qw.download.utilities.FileUtil;
@@ -34,11 +34,11 @@ public class DownloadService extends Service {
 
     private static final String TAG = "DownloadService";
     /**
-     * 保存等待下载的任务队列
+     * 等待队列
      */
     private final LinkedBlockingQueue<DownloadEntry> mQueues = new LinkedBlockingQueue<>();
     /**
-     * 保存正在下载的任务
+     * 正在下载的任务
      */
     private final HashMap<String, DownloadTask> mTasks = new HashMap<>();
 
@@ -47,7 +47,7 @@ public class DownloadService extends Service {
     public Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
-            DownloadFile e = (DownloadFile) msg.obj;
+            DownloadInfo e = (DownloadInfo) msg.obj;
             DownloadChanger.getInstance().notifyDataChanged(e);
             switch (msg.what) {
                 case DConstants.NOTIFY_ERROR:
@@ -188,13 +188,13 @@ public class DownloadService extends Service {
             return;
         }
         d(entry.id + " start");
-
         DownloadTask task = new DownloadTask(entry, mExecutors, progressTickTack);
         task.setConnectTimeout(config.getConnectTimeout());
         task.setReadTimeout(config.getReadTimeout());
         task.setMaxThread(config.getMaxThread());
         task.setMaxRetryCount(config.getMaxRetryCount());
         task.setDao(config.getDao());
+        task.setHttpURLConnectionListener(config.getHttpURLConnectionListener());
         task.setOnDownloadTaskListener((what, file) -> {
             Message msg = Message.obtain();
             msg.what = what;

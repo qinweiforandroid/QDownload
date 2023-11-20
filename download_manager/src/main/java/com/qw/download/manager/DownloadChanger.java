@@ -1,15 +1,15 @@
 package com.qw.download.manager;
 
 
-import com.qw.download.db.DownloadEntry;
-import com.qw.download.entities.DownloadFile;
+import com.qw.download.db.dto.DownloadEntry;
+import com.qw.download.DownloadInfo;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Observable;
 
 /**
- * download 改变者
+ * 下载信息被观察者
  * Created by qinwei on 2016/4/14 16:06
  * email:qinwei_it@163.com
  */
@@ -33,7 +33,7 @@ class DownloadChanger extends Observable {
         }
     }
 
-    public void notifyDataChanged(DownloadFile file) {
+    public void notifyDataChanged(DownloadInfo file) {
         setChanged();
         notifyObservers(file);
     }

@@ -40,6 +40,18 @@ public abstract class AbsDownloadThread implements Runnable {
         this.listener = listener;
     }
 
+    private HttpURLConnectionListener httpURLConnectionListener;
+
+    public void setHttpURLConnectionListener(HttpURLConnectionListener httpURLConnectionListener) {
+        this.httpURLConnectionListener = httpURLConnectionListener;
+    }
+
+    public void config(HttpURLConnection connection) {
+        if (httpURLConnectionListener != null) {
+            httpURLConnectionListener.config(connection);
+        }
+    }
+
     public void setConnectTimeout(int time) {
         this.connectTimeout = time;
     }

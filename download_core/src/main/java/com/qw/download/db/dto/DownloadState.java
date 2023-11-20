@@ -1,4 +1,4 @@
-package com.qw.download.db;
+package com.qw.download.db.dto;
 
 public enum DownloadState {
     /**

@@ -21,7 +21,7 @@ public class MyApplication extends Application {
                 .setAutoResume(true)//启动自动恢复下载
                 .setRetryCount(3)//单个任务异常T下载失败重试次数
                 .setDownloadDir(getCacheDir().getAbsolutePath())//设置文件存储目录
-                .setDebug(BuildConfig.DEBUG)
+                .setLogEnable(BuildConfig.DEBUG)
                 .builder());
         DownloadManager.init(this);
     }

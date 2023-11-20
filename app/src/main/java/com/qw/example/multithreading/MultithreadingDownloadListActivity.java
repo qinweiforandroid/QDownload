@@ -1,6 +1,5 @@
 package com.qw.example.multithreading;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -20,18 +19,13 @@ import android.widget.Toast;
 import androidx.core.content.FileProvider;
 
 import com.bumptech.glide.Glide;
-import com.qw.download.entities.DownloadFile;
+import com.qw.download.DownloadInfo;
 import com.qw.download.manager.DownloadManager;
 import com.qw.download.manager.DownloadWatcher;
 import com.qw.download.manager.FileRequest;
 import com.qw.example.base.BaseActivity;
 import com.qw.example.base.QProgress;
 import com.qw.example.R;
-import com.qw.permission.OnRequestPermissionsResultListener;
-import com.qw.permission.Permission;
-import com.qw.permission.PermissionResult;
-
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -41,13 +35,13 @@ import java.util.Formatter;
  * Created by qinwei on 2016/4/15 15:37
  * email:qinwei_it@163.com
  */
-public class MultithreadDownloadListActivity extends BaseActivity {
+public class MultithreadingDownloadListActivity extends BaseActivity {
     private ListView mDownloadLv;
     private final ArrayList<ApkEntry> modules = new ArrayList<>();
     private DownloadAdapter adapter;
     private DownloadWatcher watcher = new DownloadWatcher() {
         @Override
-        protected void onChanged(DownloadFile e) {
+        protected void onChanged(DownloadInfo e) {
             adapter.notifyDataSetChanged();
         }
     };
@@ -60,13 +54,11 @@ public class MultithreadDownloadListActivity extends BaseActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.pauseAll:
-                DownloadManager.pauseAll();
-                break;
-            case R.id.resumeAll:
-                DownloadManager.recoverAll();
-                break;
+        int id = item.getItemId();
+        if (id == R.id.pauseAll) {
+            DownloadManager.pauseAll();
+        } else if (id == R.id.resumeAll) {
+            DownloadManager.recoverAll();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -88,18 +80,6 @@ public class MultithreadDownloadListActivity extends BaseActivity {
         setTitle("多任务多线程断点下载");
         modules.addAll(gen());
         adapter.notifyDataSetChanged();
-//        Permission.Companion.init(this)
-//                .permissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE})
-//                .setOnRequestPermissionsResultListener(new OnRequestPermissionsResultListener() {
-//                    @Override
-//                    public void onRequestPermissionsResult(@NotNull PermissionResult permissionResult) {
-//                        if (!permissionResult.isGrant()) {
-//                            Toast.makeText(MultithreadDownloadListActivity.this, "需要sdcard读写权限", Toast.LENGTH_SHORT).show();
-//                            finish();
-//                        }
-//                    }
-//                })
-//                .request();
     }
 
     private ArrayList<ApkEntry> gen() {
@@ -122,6 +102,12 @@ public class MultithreadDownloadListActivity extends BaseActivity {
         return apkEntries;
     }
 
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        //重新激活需要刷新页面
+        adapter.notifyDataSetChanged();
+    }
 
     class DownloadAdapter extends BaseAdapter {
 
@@ -145,7 +131,7 @@ public class MultithreadDownloadListActivity extends BaseActivity {
             Holder holder;
             if (convertView == null) {
                 holder = new Holder();
-                convertView = LayoutInflater.from(MultithreadDownloadListActivity.this).inflate(R.layout.multithread_list_item_layout, null);
+                convertView = LayoutInflater.from(MultithreadingDownloadListActivity.this).inflate(R.layout.multithread_list_item_layout, null);
                 holder.initializeView(convertView);
                 convertView.setTag(holder);
             } else {
@@ -166,24 +152,24 @@ public class MultithreadDownloadListActivity extends BaseActivity {
         private ApkEntry apk;
 
         public void initializeView(View v) {
-            mDownloadTitleLabel = (TextView) v.findViewById(R.id.mDownloadTitleLabel);
-            mDownloadProgressDesLabel = (TextView) v.findViewById(R.id.mDownloadProgressDesLabel);
-            mDownloadProgress = (QProgress) v.findViewById(R.id.mDownloadProgress);
-            mDownloadLabel = (TextView) v.findViewById(R.id.mDownloadLabel);
-            mDownloadStateLabel = (TextView) v.findViewById(R.id.mDownloadStateLabel);
-            mDownloadIconImg = (ImageView) v.findViewById(R.id.mDownloadIconImg);
+            mDownloadTitleLabel = v.findViewById(R.id.mDownloadTitleLabel);
+            mDownloadProgressDesLabel = v.findViewById(R.id.mDownloadProgressDesLabel);
+            mDownloadProgress = v.findViewById(R.id.mDownloadProgress);
+            mDownloadLabel = v.findViewById(R.id.mDownloadLabel);
+            mDownloadStateLabel = v.findViewById(R.id.mDownloadStateLabel);
+            mDownloadIconImg = v.findViewById(R.id.mDownloadIconImg);
             mDownloadLabel.setOnClickListener(this);
         }
 
         public void initializeData(int position) {
             apk = modules.get(position);
-            Glide.with(MultithreadDownloadListActivity.this)
+            Glide.with(MultithreadingDownloadListActivity.this)
                     .load(apk.cover)
                     .into(mDownloadIconImg);
             mDownloadTitleLabel.setText(apk.name);
             mDownloadStateLabel.setText("");
             mDownloadProgressDesLabel.setText("");
-            DownloadFile file = FileRequest.getFile(apk.id());
+            DownloadInfo file = FileRequest.getFile(apk.id());
             if (file != null) {
                 mDownloadStateLabel.setText(formatSize(file.getSpeed()) + "/s");
                 mDownloadProgressDesLabel.setText(formatSize(file.getCurrentLength()) + "/" + formatSize(file.getContentLength()));
@@ -217,10 +203,10 @@ public class MultithreadDownloadListActivity extends BaseActivity {
 
         @Override
         public void onClick(View v) {
-            DownloadFile file = FileRequest.getFile(apk.id());
+            DownloadInfo file = FileRequest.getFile(apk.id());
             if (file == null || file.isIdle()) {
                 FileRequest.create(apk.id())
-                        .setName(apk.name+".apk")
+                        .setName(apk.name + ".apk")
                         .setUrl(apk.url)
                         .addDownload();
             } else if (file.isPaused() || file.isError()) {
@@ -231,11 +217,11 @@ public class MultithreadDownloadListActivity extends BaseActivity {
             } else if (file.isDone()) {
                 File apkFile = new File(file.getPath());
                 if (!apkFile.exists()) {
-                    Toast.makeText(MultithreadDownloadListActivity.this, "文件已被删除！", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MultithreadingDownloadListActivity.this, "文件已被删除！", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 // 通过Intent安装APK文件
-                loadInstallApk(MultithreadDownloadListActivity.this, apkFile);
+                loadInstallApk(MultithreadingDownloadListActivity.this, apkFile);
             }
         }
     }

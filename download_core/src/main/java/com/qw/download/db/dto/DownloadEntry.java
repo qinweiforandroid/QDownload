@@ -1,9 +1,9 @@
-package com.qw.download.db;
+package com.qw.download.db.dto;
 
 
 import androidx.annotation.RestrictTo;
 
-import com.qw.download.entities.DownloadFile;
+import com.qw.download.DownloadInfo;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -147,7 +147,7 @@ public class DownloadEntry implements Serializable {
         return state == DownloadState.DONE;
     }
 
-    public final DownloadFile file = new DownloadFile() {
+    public final DownloadInfo file = new DownloadInfo() {
         public boolean isConnecting() {
             return state == DownloadState.CONNECT;
         }

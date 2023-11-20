@@ -1,6 +1,6 @@
 package com.qw.download.manager;
 
-import com.qw.download.entities.DownloadFile;
+import com.qw.download.DownloadInfo;
 
 public class FileRequest {
     private FileRequest() {
@@ -32,7 +32,6 @@ public class FileRequest {
      * 是否支持断点下载
      */
     private boolean range = true;
-
 
 
     public String getId() {
@@ -75,20 +74,23 @@ public class FileRequest {
         return this;
     }
 
-    public void addDownload(){
+    public void addDownload() {
         DownloadManager.add(this);
     }
-    public void pauseDownload(){
+
+    public void pauseDownload() {
         DownloadManager.pause(id);
     }
-    public void resumeDownload(){
+
+    public void resumeDownload() {
         DownloadManager.resume(id);
     }
 
-    public void cancelDownload(){
+    public void cancelDownload() {
         DownloadManager.cancel(id);
     }
-    public static DownloadFile getFile(String id) {
+
+    public static DownloadInfo getFile(String id) {
         return DownloadManager.getFile(id);
     }
 }

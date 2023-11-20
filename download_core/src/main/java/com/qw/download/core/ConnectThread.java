@@ -14,12 +14,20 @@ public class ConnectThread implements Runnable {
     private final String url;
     private boolean running;
     private OnConnectThreadListener listener;
+
     private int connectTimeout;
     private int readTimeout;
+
 
     public ConnectThread(String url, OnConnectThreadListener listener) {
         this.url = url;
         this.listener = listener;
+    }
+
+    private HttpURLConnectionListener httpURLConnectionListener;
+
+    public void setHttpURLConnectionListener(HttpURLConnectionListener httpURLConnectionListener) {
+        this.httpURLConnectionListener = httpURLConnectionListener;
     }
 
     public boolean isRunning() {
@@ -49,6 +57,10 @@ public class ConnectThread implements Runnable {
             connection.addRequestProperty("Accept-Ranges", "bytes");
             connection.setConnectTimeout(connectTimeout);
             connection.setReadTimeout(readTimeout);
+            //config
+            if (httpURLConnectionListener != null) {
+                httpURLConnectionListener.config(connection);
+            }
             boolean isSupportRange;
             int contentLength = connection.getContentLength();
             int code = connection.getResponseCode();

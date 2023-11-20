@@ -1,4 +1,4 @@
-package com.qw.download.db;
+package com.qw.download.db.sqlite;
 
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
@@ -10,6 +10,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.qw.download.db.dto.DownloadEntry;
+import com.qw.download.db.dto.DownloadState;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

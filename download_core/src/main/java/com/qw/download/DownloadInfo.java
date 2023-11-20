@@ -1,8 +1,8 @@
-package com.qw.download.entities;
+package com.qw.download;
 
 import java.io.Serializable;
 
-public interface DownloadFile extends Serializable {
+public interface DownloadInfo extends Serializable {
     String getId();
 
     String getPath();

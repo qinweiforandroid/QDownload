@@ -10,24 +10,16 @@ import com.qw.download.DownloadInfo;
 public class FileDownload {
 
     private String id;
-    /**
-     * 文件路径
-     */
+
     private String url;
 
-    /**
-     * 指定下载目录
-     */
+
     private String dir;
 
-    /**
-     * 指定下载文件名称
-     */
+
     private String name;
 
-    /**
-     * 是否支持断点下载
-     */
+
     private boolean range = true;
 
     private FileDownload() {
@@ -43,17 +35,14 @@ public class FileDownload {
          * 文件路径
          */
         private String url;
-
         /**
          * 指定下载目录
          */
         private String dir;
-
         /**
          * 指定下载文件名称
          */
         private String name;
-
         /**
          * 是否支持断点下载
          */
@@ -130,6 +119,14 @@ public class FileDownload {
 
     public static void resume(String id) {
         DownloadManager.resume(id);
+    }
+
+    public static void recoverAll() {
+        DownloadManager.recoverAll();
+    }
+
+    public static void pauseAll() {
+        DownloadManager.pauseAll();
     }
 
     public static void cancel(String id) {

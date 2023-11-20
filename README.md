@@ -40,9 +40,9 @@ allprojects {
 ```groovy
 dependencies {
   //核心库
-  implementation 'com.github.qinweiforandroid:QDownload:2.0.0807'
+  implementation 'com.github.qinweiforandroid.QDownload:download-core:3.0.1120'
   //多任务下载管理
-  implementation 'com.github.qinweiforandroid.QDownload:download-manager:2.0.0807'
+  implementation 'com.github.qinweiforandroid.QDownload:download-manager:3.0.1120'
 }
 ```
 
@@ -51,23 +51,24 @@ dependencies {
 在application中初始化
 
 ```java
-public class MyApplication extends Application{
+public class MyApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        //下載全局配置
-        DownloadConfig.init(new DownloadConfig.Builder()
-                .setConnectTimeout(10000)//连接超时时间
-                .setReadTimeout(10000)//读取超时时间
+        DownloadConfig.init(new DownloadConfig.Builder(this)
+                .setConnectTimeout(10_000)//连接超时时间
+                .setReadTimeout(10_000)//读取超时时间
                 .setMaxTask(3)//最多3个任务同时下载
                 .setMaxThread(3)//1个任务分3个线程分段下载
                 .setAutoResume(true)//启动自动恢复下载
-                .setRetryCount(3)//单个任务异常下载失败重试次数
-                .setDownloadDir(getExternalCacheDir().getAbsolutePath())
+                .setRetryCount(3)//单个任务异常T下载失败重试次数
+                .setDownloadDir(getCacheDir().getAbsolutePath())//设置文件存储目录
+                .setHttpURLConnectionListener(connection -> {
+                    //you can config connection
+                })
+                .setLogEnable(BuildConfig.DEBUG)
                 .builder());
-        //初始化下载组件(可在子线程中做)
-        DownloadManager.init(this);
-    }    
+    }
 }
 ```
 
@@ -89,12 +90,16 @@ public class SingleDownloadActivity extends AppCompatActivity {
     public void addDownload(){
         //todo check perimission
         //step 1 创建request
-        FileRequest.create(id)// 生成一个唯一id
-            .setRange(false)//不适用断点下载
-            .setName("weixin_680.apk")//设置下载的文件名称
-            .setUrl("http://gdown.baidu.com/weixin_680.apk")//设置下载链接
-            .setDir(getExternalCacheDir().getAbsolutePath())//设置下载的文件路径
-            .addDownload();//执行下载
+        new FileDownload.Builder(id)
+                //不启用断点下载
+                .setRange(false)
+                //设置下载的文件名称
+                .setName("weixin_680.apk")
+                //设置下载链接
+                .setUrl("http://gdown.baidu.com/weixin_680.apk")
+        			  //设置下载的文件路径
+                .setDir(getExternalCacheDir().getAbsolutePath())
+                .add();
     }
     
     @Override
@@ -117,15 +122,15 @@ public class SingleDownloadActivity extends AppCompatActivity {
 可以根据下载的 **id** 获取文件信息
 
 ```java
-public static DownloadFile getFile(String id) {
-    return DownloadManager.getFile(id);
-}
+  public static DownloadInfo getInfo(String id) {
+      return DownloadManager.getFileInfo(id);
+  }
 ```
 
 文件信息如下：
 
 ```java
-public interface DownloadFile extends Serializable {
+public interface DownloadInfo extends Serializable {
     String getId();//下载文件id
     String getPath();//文件地址
     String getUrl();//远程文件地址
@@ -163,7 +168,7 @@ public void addDownload(String id,String url){
 ```java
 public void pauseDownload(String id){
     //添加一个下载任务
-   FileRequest.create(id).pauseDownload(); 
+   FileDownload.pause(id); 
 }
 ```
 
@@ -171,21 +176,20 @@ public void pauseDownload(String id){
 
 ```java
 public void resumeDownload(DownloadEntry entry){
-    FileRequest.create(apk.id()).resumeDownload();
+   FileDownload.resume(id);
 }
 ```
 **暂停所有下载任务**
 ```java
 public void pauseAll(){
-    DownloadManager.pauseAll(entry)    
+    FileDownload.pauseAll()    
 }
 ```
 **恢复所有下载任务**
 
 ```java
 public void recoverAll(){
-    //添加一个下载任务
-    DownloadManager.recoverAll(entry)    
+    FileDownload.recoverAll()    
 }
 ```
 
@@ -220,12 +224,13 @@ public class ApkEntry {
 ```java
 public void downloadApk(ApkEntry apk){
     //1、先check当前apk是否在下载
-    DownloadFile file = FileRequest.getFile(apk.id());
+    String id = apk.id();
+    DownloadInfo info = FileDownload.getInfo(id);
     if (file == null || file.isIdle()) {
-        FileRequest.create(apk.id())
-            .setName(apk.name+".apk")
-            .setUrl(apk.url)
-            .addDownload();
+        new FileDownload.Builder(id)
+                .setName(apk.name + ".apk")
+                .setUrl(apk.url)
+                .add();
     }
 }
 ```
@@ -233,11 +238,7 @@ public void downloadApk(ApkEntry apk){
 暂停apk下载
 ```java
 public void pauseDownloadApk(ApkEntry apk){
-    //1、先check当前apk是否在下载任务中
-    DownloadFile file = FileRequest.getFile(apk.id());
-    if(file!=null){
-        FileRequest.create(id).pauseDownload(); 
-    }
+    FileDownload.pause(apk.id());
 }
 ```
 

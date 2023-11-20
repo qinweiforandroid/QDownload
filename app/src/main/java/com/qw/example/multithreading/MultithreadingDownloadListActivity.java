@@ -56,9 +56,9 @@ public class MultithreadingDownloadListActivity extends BaseActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.pauseAll) {
-            DownloadManager.pauseAll();
+            FileDownload.pauseAll();
         } else if (id == R.id.resumeAll) {
-            DownloadManager.recoverAll();
+            FileDownload.recoverAll();
         }
         return super.onOptionsItemSelected(item);
     }

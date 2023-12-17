@@ -203,6 +203,7 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, AbsD
             if (start < end) {
                 threads[i] = new MultiDownloadThread(entry.id, entry.url, destFile, i, start, end, this);
                 threads[i].setConnectTimeout(connectTimeout);
+                threads[i].setHttpURLConnectionListener(httpURLConnectionListener);
                 threads[i].setReadTimeout(readTimeout);
                 states[i] = DownloadState.ING;
                 mExecutors.execute(threads[i]);
@@ -217,7 +218,7 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, AbsD
         threads = new SingleDownloadThread[1];
         states = new DownloadState[1];
         threads[0] = new SingleDownloadThread(entry.id, entry.url, destFile, this);
-        ((SingleDownloadThread) threads[0]).setHttpURLConnectionListener(httpURLConnectionListener);
+        threads[0].setHttpURLConnectionListener(httpURLConnectionListener);
         threads[0].setConnectTimeout(connectTimeout);
         threads[0].setReadTimeout(readTimeout);
         states[0] = DownloadState.ING;

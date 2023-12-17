@@ -157,9 +157,9 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, AbsD
 
     private void download() {
         d("download");
+        tryDataFix();
         //记录触发下载的时间戳
         initDownloadTempData();
-
         entry.state = DownloadState.ING;
         notifyUpdate(DConstants.NOTIFY_ING);
         if (entry.isRange()) {
@@ -169,6 +169,16 @@ public class DownloadTask implements ConnectThread.OnConnectThreadListener, AbsD
         }
     }
 
+    /**
+     * 修复数据
+     * 1.本地文件已删除，下载信息重置
+     */
+    private void tryDataFix() {
+        if (entry.currentLength > 0 && !new File(entry.getDir(), entry.getName()).exists()) {
+            entry.reset();
+            dao.newOrUpdate(entry);
+        }
+    }
 
     private void multithreadingDownload() {
         d("startMultithreadingDownload");
